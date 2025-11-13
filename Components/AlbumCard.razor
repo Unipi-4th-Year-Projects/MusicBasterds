@@ -1,0 +1,52 @@
+﻿@using MusicBasterds.Models
+@inherits ComponentBase
+
+<div class="card shadow-sm mb-3 bg-dark text-light" style="cursor: pointer;" @onclick="GoToAlbumDetail">
+    @if (Album.Image != null)
+    {
+        <img src="@($"data:image/png;base64,{Convert.ToBase64String(Album.Image)}")"
+             class="card-img-top" style="max-height:200px; object-fit:cover;" />
+    }
+
+    <div class="card-body">
+        <h5 class="card-title">@Album.Title</h5>
+        <p class="mb-1"><strong>Artist:</strong> @Album.Artist</p>
+        <p class="mb-1"><strong>Genre:</strong> @Album.Genre</p>
+        <p class="card-text">@GetShortDescription()</p>
+
+        <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">By @Album.UserName</small>
+            <div>
+                @if (Album.AverageRating >= 0)
+                {
+                    <span class="badge bg-primary">⭐ @Album.DisplayRating</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">⭐ No ratings</span>
+                }
+                <span class="badge bg-secondary ms-1">💬 @Album.Comments.Count</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Album Album { get; set; } = new Album();
+
+    [Inject]
+    private NavigationManager Nav { get; set; } = default!;
+
+    private string GetShortDescription()
+    {
+        if (string.IsNullOrWhiteSpace(Album.Description)) return "";
+        var words = Album.Description.Split(' ');
+        return words.Length > 30 ? string.Join(" ", words.Take(30)) + "..." : Album.Description;
+    }
+
+    private void GoToAlbumDetail()
+    {
+        Nav.NavigateTo($"/album/{Album.Id}");
+    }
+}

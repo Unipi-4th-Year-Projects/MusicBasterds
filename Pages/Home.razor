@@ -1,0 +1,66 @@
+﻿@page "/"
+@inject MusicBasterds.Services.AuthService Auth
+@inject MusicBasterds.Services.AlbumService AlbumService
+@inject NavigationManager Nav
+
+<h1 class="fw-bold mt-3">🎶 MusicBasterds</h1>
+<p class="lead">Welcome to the ultimate album discovery forum.</p>
+
+@if (CurrentUser != null)
+{
+    <div class="alert alert-success">
+        Logged in as <strong>@CurrentUser.Username</strong> 🎧
+    </div>
+
+    <div class="d-flex flex-wrap gap-3 mt-4">
+        <button class="btn btn-primary" @onclick="GoToUpload">Upload Album</button>
+        <button class="btn btn-outline-info" @onclick="GoToProfile">My Profile</button>
+        <button class="btn btn-outline-danger" @onclick="Logout">Logout</button>
+    </div>
+}
+else
+{
+    <div class="alert alert-info mt-4">
+        You’re not logged in. <a href="/login">Login</a> or <a href="/register">Sign up</a> to start sharing music!
+    </div>
+}
+
+<hr />
+
+<h4>🔥 Latest Album Recommendations</h4>
+
+@if (Albums.Count == 0)
+{
+    <p>No albums yet. Be the first to recommend one!</p>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-3 g-3 mt-2">
+        @foreach (var album in Albums.OrderByDescending(a => a.UploadDate))
+        {
+            <div class="col">
+                <AlbumCard Album="@album" />
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private User? CurrentUser;
+    private List<MusicBasterds.Models.Album> Albums = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        CurrentUser = await Auth.GetCurrentUserAsync();
+        Albums = await AlbumService.GetAllAlbumsAsync();
+    }
+
+    private void GoToUpload() => Nav.NavigateTo("/upload");
+    private void GoToProfile() => Nav.NavigateTo("/profile");
+
+    private async Task Logout()
+    {
+        await Auth.LogoutAsync();
+        Nav.NavigateTo("/welcome"); 
+    }
+}

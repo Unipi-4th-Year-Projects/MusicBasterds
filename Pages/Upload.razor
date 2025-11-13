@@ -1,0 +1,178 @@
+﻿@page "/upload"
+@using MusicBasterds.Models
+@inject AlbumService AlbumService
+@inject AuthService AuthService
+@inject NavigationManager Nav
+@using Microsoft.AspNetCore.Components.Forms
+
+<h3 class="mb-4">Upload Album Recommendation</h3>
+
+@if (SuccessMessage != null)
+{
+    <div class="alert alert-success">@SuccessMessage</div>
+}
+
+@if (ErrorMessage != null)
+{
+    <div class="alert alert-danger">@ErrorMessage</div>
+}
+
+<EditForm Model="@AlbumModel" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Album Title</label>
+        <input class="form-control" @bind="AlbumModel.Title" placeholder="Enter album title..." />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Artist</label>
+        <input class="form-control" @bind="AlbumModel.Artist" placeholder="Enter artist name..." />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Genre</label>
+        <select class="form-select" @bind="AlbumModel.Genre">
+            @foreach (var genre in Genres)
+            {
+                <option value="@genre">@genre</option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Album Image (optional)</label>
+        <InputFile OnChange="HandleImageSelected" />
+        @if (PreviewImage != null)
+        {
+            <img src="@PreviewImage" class="img-thumbnail mt-2" style="max-height:200px;" />
+        }
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Album Links</label>
+        @for (int i = 0; i < AlbumModel.Links.Count; i++)
+        {
+            var index = i; // Important: capture the current index
+                           <div class="input-group mb-2">
+                               <input type="url"
+                                      class="form-control"
+                                      value="@AlbumModel.Links[index].Url"
+                                      @oninput="@(e => UpdateLink(index, e.Value?.ToString() ?? ""))"
+                                      placeholder="Enter album link..." />
+
+                @if (AlbumModel.Links.Count > 1)
+                {
+                    <button type="button"
+                            class="btn btn-outline-danger"
+                            @onclick="() => RemoveLink(index)">
+                        Remove
+                    </button>
+                }
+            </div>
+        }
+        <button type="button" class="btn btn-outline-primary" @onclick="AddLink">+ Add Another Link</button>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" @bind="AlbumModel.Description" rows="5"></textarea>
+        <small>@WordCount words</small>
+    </div>
+
+    <button type="submit" class="btn btn-success" disabled="@(!IsFormValid)">Submit Album</button>
+</EditForm>
+
+@code {
+    private Album AlbumModel = new Album
+    {
+        Links = new List<LinkItem> { new LinkItem() },
+        Genre = "???" // default
+    };
+
+    private string? SuccessMessage;
+    private string? ErrorMessage;
+    private string? PreviewImage;
+
+    private List<string> Genres = new List<string>
+    {
+        "Rock","Pop","Hip-Hop","Electronic","Jazz","Classical","R&B","Metal",
+        "Folk","Reggae","Country","Blues","Punk","Soul","Latin","Funk",
+        "Ambient","Experimental","Indie","???"
+    };
+
+    private int WordCount => string.IsNullOrWhiteSpace(AlbumModel.Description)
+        ? 0
+        : AlbumModel.Description.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+
+    private bool IsFormValid =>
+        AlbumModel.Links.Count > 0 &&
+        !string.IsNullOrWhiteSpace(AlbumModel.Links[0].Url) &&
+        WordCount >= 50 &&
+        !string.IsNullOrWhiteSpace(AlbumModel.Title) &&
+        !string.IsNullOrWhiteSpace(AlbumModel.Artist);
+
+    private void AddLink() => AlbumModel.Links.Add(new LinkItem());
+    private void RemoveLink(int index)
+    {
+        if (index >= 0 && index < AlbumModel.Links.Count)
+            AlbumModel.Links.RemoveAt(index);
+    }
+
+    private async Task HandleSubmit()
+    {
+        ErrorMessage = null;
+        SuccessMessage = null;
+
+        if (!IsFormValid)
+        {
+            ErrorMessage = "Please fill in all required fields, at least one valid link, and a 50-word description.";
+            return;
+        }
+
+        var currentUser = await AuthService.GetCurrentUserAsync();
+        if (currentUser == null)
+        {
+            ErrorMessage = "You must be logged in to upload.";
+            return;
+        }
+
+        AlbumModel.UserName = currentUser.Username;
+        AlbumModel.UploadDate = DateTime.Now;
+
+        await AlbumService.AddAlbumAsync(AlbumModel);
+
+        SuccessMessage = "Album uploaded successfully!";
+        // Reset form
+        AlbumModel = new Album
+        {
+            Links = new List<LinkItem> { new LinkItem() },
+            Genre = "???"
+        };
+        PreviewImage = null;
+    }
+
+    private async Task HandleImageSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            using var stream = file.OpenReadStream(5_000_000); // max 5MB
+            var buffer = new byte[file.Size];
+            await stream.ReadAsync(buffer);
+            AlbumModel.Image = buffer;
+
+            // Preview
+            PreviewImage = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+        }
+    }
+
+    private void UpdateLink(int index, string value)
+    {
+        if (index >= 0 && index < AlbumModel.Links.Count)
+        {
+            AlbumModel.Links[index].Url = value;
+        }
+    }
+}

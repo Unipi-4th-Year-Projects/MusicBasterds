@@ -1,0 +1,45 @@
+﻿@page "/register"
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<h3>Sign Up</h3>
+
+@if (!string.IsNullOrEmpty(Message))
+{
+    <div class="alert @(IsError ? "alert-danger" : "alert-success")">@Message</div>
+}
+
+<div class="mb-3">
+    <label>Username</label>
+    <input @bind="User.Username" class="form-control" />
+</div>
+<div class="mb-3">
+    <label>Email</label>
+    <input type="email" @bind="User.Email" class="form-control" />
+</div>
+<div class="mb-3">
+    <label>Password</label>
+    <input type="password" @bind="User.Password" class="form-control" />
+</div>
+<button class="btn btn-primary" @onclick="RegisterUser">Sign Up</button>
+
+@code {
+    private User User = new();
+    private string? Message;
+    private bool IsError;
+
+    private async Task RegisterUser()
+    {
+        var success = await Auth.RegisterAsync(User);
+        if (success)
+        {
+            Message = "Registration successful! You can now log in.";
+            IsError = false;
+        }
+        else
+        {
+            Message = "Username or email already exists.";
+            IsError = true;
+        }
+    }
+}

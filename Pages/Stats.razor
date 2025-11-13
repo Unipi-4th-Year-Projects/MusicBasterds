@@ -1,0 +1,89 @@
+﻿@page "/stats"
+@inject AlbumService AlbumService
+
+<h3>📊 MusicBasterds Statistics</h3>
+
+<div class="row mt-4">
+    <!-- Weekly Stats -->
+    <div class="col-md-6">
+        <h5>🔥 Top Albums This Week</h5>
+        @if (TopAlbumsThisWeek.Count == 0)
+        {
+            <p class="text-muted">No albums uploaded this week.</p>
+        }
+        else
+        {
+            @foreach (var album in TopAlbumsThisWeek)
+            {
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <h6 class="card-title">@album.Title - @album.Artist</h6>
+                        <p class="card-text mb-1">Rating: @album.AverageRating.ToString("F1")/100</p>
+                        <small class="text-muted">By @album.UserName</small>
+                    </div>
+                </div>
+            }
+        }
+
+        <h5 class="mt-4">🏆 Top Users This Week</h5>
+        @if (TopUsersThisWeek.Count == 0)
+        {
+            <p class="text-muted">No user activity this week.</p>
+        }
+        else
+        {
+            @foreach (var user in TopUsersThisWeek)
+            {
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <h6 class="card-title">@user.Username</h6>
+                        <p class="card-text mb-1">Avg Rating: @user.AverageRating.ToString("F1")/100</p>
+                        <small class="text-muted">@user.AlbumCount album(s)</small>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <!-- All Time Stats -->
+    <div class="col-md-6">
+        <h5>⭐ Top Albums of All Time</h5>
+        @foreach (var album in TopAlbumsAllTime)
+        {
+            <div class="card mb-2">
+                <div class="card-body">
+                    <h6 class="card-title">@album.Title - @album.Artist</h6>
+                    <p class="card-text mb-1">Rating: @album.AverageRating.ToString("F1")/100</p>
+                    <small class="text-muted">By @album.UserName</small>
+                </div>
+            </div>
+        }
+
+        <h5 class="mt-4">🆕 Latest Albums</h5>
+        @foreach (var album in LatestAlbums)
+        {
+            <div class="card mb-2">
+                <div class="card-body">
+                    <h6 class="card-title">@album.Title - @album.Artist</h6>
+                    <p class="card-text mb-1">@album.Genre</p>
+                    <small class="text-muted">Added @album.UploadDate.ToString("MMM dd, yyyy")</small>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<Album> TopAlbumsAllTime = new();
+    private List<Album> TopAlbumsThisWeek = new();
+    private List<Album> LatestAlbums = new();
+    private List<UserStats> TopUsersThisWeek = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        TopAlbumsAllTime = await AlbumService.GetTopAlbumsAllTimeAsync();
+        TopAlbumsThisWeek = await AlbumService.GetTopAlbumsThisWeekAsync();
+        LatestAlbums = await AlbumService.GetLatestAlbumsAsync();
+        TopUsersThisWeek = await AlbumService.GetTopUsersThisWeekAsync();
+    }
+}

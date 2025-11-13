@@ -1,0 +1,87 @@
+﻿@page "/profile"
+@inject AuthService Auth
+@inject AlbumService AlbumService
+@inject NavigationManager Nav
+
+<h3>My Profile</h3>
+
+@if (CurrentUser == null)
+{
+    <div class="alert alert-warning">
+        You need to <a href="/login">login</a> to view your profile.
+    </div>
+}
+else
+{
+    <div class="row">
+        <!-- User Info Card -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">@CurrentUser.Username</h5>
+                    <p class="card-text">Email: @CurrentUser.Email</p>
+                    <p class="card-text">Average Rating: @UserAverageRating.ToString("F1")/100</p>
+                    <p class="card-text">Albums Uploaded: @UserAlbums.Count</p>
+
+                    @if (TopRatedAlbums.Any())
+                    {
+                        <div class="mt-3">
+                            <h6>🏆 Top Rated Albums</h6>
+                            @foreach (var album in TopRatedAlbums)
+                            {
+                                <div class="border-start border-primary ps-2 mb-2">
+                                    <strong>@album.Title</strong><br />
+                                    <small>⭐ @album.AverageRating.ToString("F1")/100</small>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- User Albums -->
+        <div class="col-md-8">
+            <h5>My Albums</h5>
+            @if (UserAlbums.Count == 0)
+            {
+                <p>You haven't uploaded any albums yet.</p>
+                <button class="btn btn-primary" @onclick="GoToUpload">Upload Your First Album</button>
+            }
+            else
+            {
+                <div class="row row-cols-1 g-3">
+                    @foreach (var album in UserAlbums.OrderByDescending(a => a.UploadDate))
+                    {
+                        <div class="col">
+                            <AlbumCard Album="@album" />
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private User? CurrentUser;
+    private List<Album> UserAlbums = new();
+    private double UserAverageRating;
+    private List<Album> TopRatedAlbums = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        CurrentUser = await Auth.GetCurrentUserAsync();
+        if (CurrentUser != null)
+        {
+            UserAlbums = await AlbumService.GetUserAlbumsAsync(CurrentUser.Username);
+            UserAverageRating = await AlbumService.GetUserAverageRatingAsync(CurrentUser.Username);
+            TopRatedAlbums = UserAlbums
+                .OrderByDescending(a => a.AverageRating)
+                .Take(5)
+                .ToList();
+        }
+    }
+
+    private void GoToUpload() => Nav.NavigateTo("/upload");
+}

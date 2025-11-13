@@ -1,0 +1,246 @@
+﻿@page "/album/{AlbumId:guid}"
+@inject AlbumService AlbumService
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<h3>Album Details</h3>
+
+@if (Album == null)
+{
+    <div class="alert alert-warning">Album not found.</div>
+}
+else
+{
+    <div class="row">
+        <!-- Album Info -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    @if (Album.Image != null)
+                    {
+                        <img src="@($"data:image/png;base64,{Convert.ToBase64String(Album.Image)}")"
+                             class="img-fluid mb-3" style="max-height: 300px; object-fit: cover;" />
+                    }
+
+                    <h4>@Album.Title</h4>
+                    <h5 class="text-muted">by @Album.Artist</h5>
+                    <p><strong>Genre:</strong> @Album.Genre</p>
+                    <p><strong>Description:</strong> @Album.Description</p>
+
+                    @if (Album.Links.Any())
+                    {
+                        <div class="mt-3">
+                            <h6>Listen Links:</h6>
+                            @foreach (var link in Album.Links)
+                            {
+                                <a href="@link.Url" target="_blank" class="btn btn-outline-primary btn-sm me-2 mb-2">
+                                    🎵 Listen
+                                </a>
+                            }
+                        </div>
+                    }
+
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            Uploaded by @Album.UserName on @Album.UploadDate.ToString("MMM dd, yyyy")
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rating Section -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5>Rate this Album</h5>
+                    @if (CurrentUser == null)
+                    {
+                        <p class="text-muted">Please <a href="/login">login</a> to rate this album.</p>
+                    }
+                    else if (HasUserRated)
+                    {
+                        <p class="text-success">You've already rated this album: @UserRating/100</p>
+                    }
+                    else
+                    {
+                        <div class="d-flex align-items-center gap-3">
+                            <input type="range" class="form-range" min="0" max="100"
+                                   @bind="NewRatingValue" @bind:event="oninput" />
+                            <span class="fw-bold">@NewRatingValue/100</span>
+                            <button class="btn btn-primary btn-sm" @onclick="SubmitRating">Submit Rating</button>
+                        </div>
+                    }
+
+                    <div class="mt-2">
+                        @if (Album.AverageRating >= 0)
+                        {
+                            <h6>Average Rating: <strong>@Album.DisplayRating/100</strong></h6>
+                            <small>Based on @Album.Ratings.Count ratings</small>
+                        }
+                        else
+                        {
+                            <h6>Average Rating: <strong>Not rated yet</strong></h6>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comments Section -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5>Comments (@Album.Comments.Count)</h5>
+
+                    <!-- Add Comment -->
+                    @if (CurrentUser == null)
+                    {
+                        <p class="text-muted">Please <a href="/login">login</a> to comment.</p>
+                    }
+                    else
+                    {
+                        <div class="mb-3">
+                            <textarea class="form-control" @bind="NewComment" rows="3"
+                                      placeholder="Share your thoughts about this album..."></textarea>
+                            <button class="btn btn-primary mt-2" @onclick="SubmitComment"
+                                    disabled="@string.IsNullOrWhiteSpace(NewComment)">
+                                Post Comment
+                            </button>
+                        </div>
+                    }
+
+                    <!-- Comments List -->
+                    @foreach (var comment in Album.Comments.OrderByDescending(c => c.PostedAt))
+                    {
+                        <div class="border-bottom pb-3 mb-3">
+                            <div class="d-flex justify-content-between">
+                                <strong>@comment.UserName</strong>
+                                <small class="text-muted">@comment.PostedAt.ToString("MMM dd, yyyy HH:mm")</small>
+                            </div>
+                            <p class="mb-1 mt-1">@comment.Content</p>
+
+                            <!-- Owner Response -->
+                            @if (!string.IsNullOrEmpty(comment.OwnerResponse))
+                            {
+                                <div class="bg-light p-3 rounded mt-2 ms-3 border-start border-3 border-primary">
+                                    <strong>🎵 @Album.UserName (Owner) responded:</strong>
+                                    <p class="mb-0 mt-1">@comment.OwnerResponse</p>
+                                    <small class="text-muted">@comment.ResponseDate?.ToString("MMM dd, yyyy HH:mm")</small>
+                                </div>
+                            }
+                            else if (CurrentUser?.Username == Album.UserName)
+                            {
+                                <div class="mt-2 ms-3">
+                                    <textarea class="form-control form-control-sm"
+                                              value="@GetResponseText(comment.Id)"
+                                              @oninput="@(e => UpdateResponseText(comment.Id, e.Value?.ToString() ?? ""))"
+                                              rows="2"
+                                              placeholder="Respond to this comment as owner..."></textarea>
+                                    <button class="btn btn-outline-success btn-sm mt-1"
+                                            @onclick="() => SubmitOwnerResponse(comment)">
+                                        Respond as Owner
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Stats -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6>Album Statistics</h6>
+                    @if (Album.AverageRating >= 0)
+                    {
+                        <p>📊 Average Rating: <strong>@Album.DisplayRating/100</strong></p>
+                    }
+                    else
+                    {
+                        <p>📊 Average Rating: <strong>Not rated</strong></p>
+                    }
+                    <p>💬 Comments: <strong>@Album.Comments.Count</strong></p>
+                    <p>⭐ Ratings: <strong>@Album.Ratings.Count</strong></p>
+                    <p>📅 Uploaded: <strong>@Album.UploadDate.ToString("MMM dd, yyyy")</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid AlbumId { get; set; }
+
+    private Album? Album { get; set; }
+    private User? CurrentUser { get; set; }
+    private string NewComment { get; set; } = string.Empty;
+    private int NewRatingValue { get; set; } = 80;
+    private bool HasUserRated => CurrentUser != null && Album?.Ratings.Any(r => r.UserName == CurrentUser.Username) == true;
+    private int UserRating => Album?.Ratings.FirstOrDefault(r => r.UserName == CurrentUser?.Username)?.Value ?? 0;
+    private Dictionary<Guid, string> responseTexts = new Dictionary<Guid, string>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Album = await AlbumService.GetAlbumByIdAsync(AlbumId);
+        CurrentUser = await Auth.GetCurrentUserAsync();
+    }
+
+    private async Task SubmitRating()
+    {
+        if (CurrentUser == null || Album == null) return;
+
+        var rating = new Rating
+        {
+            Value = NewRatingValue,
+            UserName = CurrentUser.Username
+        };
+
+        await AlbumService.AddRatingAsync(AlbumId, rating);
+        Album = await AlbumService.GetAlbumByIdAsync(AlbumId);
+        StateHasChanged();
+    }
+
+    private async Task SubmitComment()
+    {
+        if (CurrentUser == null || Album == null || string.IsNullOrWhiteSpace(NewComment)) return;
+
+        var comment = new Comment
+        {
+            UserName = CurrentUser.Username,
+            Content = NewComment.Trim(),
+            PostedAt = DateTime.Now
+        };
+
+        await AlbumService.AddCommentAsync(AlbumId, comment);
+        Album = await AlbumService.GetAlbumByIdAsync(AlbumId);
+        NewComment = string.Empty;
+        StateHasChanged();
+    }
+
+    private string GetResponseText(Guid commentId)
+    {
+        return responseTexts.ContainsKey(commentId) ? responseTexts[commentId] : string.Empty;
+    }
+
+    private void UpdateResponseText(Guid commentId, string value)
+    {
+        responseTexts[commentId] = value;
+    }
+
+    private async Task SubmitOwnerResponse(Comment comment)
+    {
+        var responseText = GetResponseText(comment.Id);
+
+        if (Album == null || string.IsNullOrWhiteSpace(responseText)) return;
+
+        comment.OwnerResponse = responseText.Trim();
+        comment.ResponseDate = DateTime.Now;
+
+        await AlbumService.UpdateCommentAsync(AlbumId, comment);
+        Album = await AlbumService.GetAlbumByIdAsync(AlbumId);
+
+        // Clear the response text
+        responseTexts[comment.Id] = string.Empty;
+
+        StateHasChanged();
+    }
+}
