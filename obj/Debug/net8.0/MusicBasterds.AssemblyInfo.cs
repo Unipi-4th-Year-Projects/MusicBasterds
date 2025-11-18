@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MusicBasterds")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fc19188b092af497ec7bb5fa04f9c9cb0f3b209b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f64da5e6bbbcb30bcad98ab30123bda1be8368b4")]
 [assembly: System.Reflection.AssemblyProductAttribute("MusicBasterds")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MusicBasterds")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

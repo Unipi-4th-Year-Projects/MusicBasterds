@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "MusicBasterds",
   "resources": {
-    "hash": "sha256-SXhJ5QNcF8l7lrdqt4FCKMYBYVsuX/FB0XpeQmqyr0I=",
+    "hash": "sha256-zOjSs9vVZLmSASBnD1vEqbxs71QAToAAqjIKushBQOE=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-D0bzod5lwwSzPR43JC8TTCcZKw+3jIHOk8CZFCRj5is="
     },
@@ -209,10 +209,10 @@
       "mscorlib.wasm": "sha256-8qWtIcy8fV43tlcx4DxsF45RlkcfK6588vVoxF7be2E=",
       "netstandard.wasm": "sha256-eOgz2RiO4YaPLOMIGgVLNrcfsQhmLQJzR0N7Pu2teXc=",
       "System.Private.CoreLib.wasm": "sha256-F8T63QCIbMPXPQPqTcuyBAw+oVvZSrWjy88j7fiJQZ4=",
-      "MusicBasterds.wasm": "sha256-DPY3SvkcdhaNRkOzwPk3v4E94fnNyBXzv6bK99JyFBQ="
+      "MusicBasterds.wasm": "sha256-PNg02s5y8rw5c7+oD9sgKlf2VBRvDoepJH7aH8ynMP4="
     },
     "pdb": {
-      "MusicBasterds.pdb": "sha256-iH7neavbAjNj/vO+Piub3V8e0P9nztRTxj5DKBXxS6g="
+      "MusicBasterds.pdb": "sha256-EHOgYlK87acd0jC0X3p/iAr7g4w4Ucp1Knn3trnZsmo="
     }
   },
   "cacheBootResources": true,

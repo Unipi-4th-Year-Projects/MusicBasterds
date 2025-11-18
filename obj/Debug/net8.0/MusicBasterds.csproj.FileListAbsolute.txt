@@ -2072,6 +2072,6 @@ C:\Users\kandh\Source\Repos\MusicBasterds\obj\Debug\net8.0\compressed\x8ez1fr51h
 C:\Users\kandh\Source\Repos\MusicBasterds\obj\Debug\net8.0\compressed\tqtm42igmw-yw58uu4usp.gz
 C:\Users\kandh\Source\Repos\MusicBasterds\obj\Debug\net8.0\compressed\yawr6ziefk-0i04c42g1q.gz
 C:\Users\kandh\Source\Repos\MusicBasterds\obj\Debug\net8.0\compressed\v3gwru92wm-pkshd96xbg.gz
-C:\Users\kandh\Source\Repos\MusicBasterds\obj\Debug\net8.0\compressed\q53zpv4vgv-4o5hzc6fr4.gz
-C:\Users\kandh\Source\Repos\MusicBasterds\obj\Debug\net8.0\compressed\158i00j536-49ofixmmnx.gz
-C:\Users\kandh\Source\Repos\MusicBasterds\obj\Debug\net8.0\compressed\arh9dh98xn-gnwi8jgmv0.gz
+C:\Users\kandh\Source\Repos\MusicBasterds\obj\Debug\net8.0\compressed\q53zpv4vgv-csglc9wh23.gz
+C:\Users\kandh\Source\Repos\MusicBasterds\obj\Debug\net8.0\compressed\158i00j536-0gphowkgjx.gz
+C:\Users\kandh\Source\Repos\MusicBasterds\obj\Debug\net8.0\compressed\arh9dh98xn-of08xwxce4.gz
