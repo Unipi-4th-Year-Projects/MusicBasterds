@@ -1,0 +1,406 @@
+﻿@page "/edit-album/{AlbumId:guid}"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Forms
+@attribute [Authorize]
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject AlbumService AlbumService
+@inject NavigationManager Nav
+@inject IJSRuntime JSRuntime
+
+<div class="neon-upload-container">
+    <div class="upload-header">
+        <button class="back-button" @onclick="GoBack">
+            <span class="back-icon">←</span> Back
+        </button>
+        <h1 class="page-title">
+            <span class="title-icon">✏️</span> Edit Album
+        </h1>
+    </div>
+
+    @if (!CanEdit)
+    {
+        <div class="neon-alert neon-alert-error">
+            <span class="alert-icon">🚫</span>
+            <span>You don't have permission to edit this album.</span>
+        </div>
+    }
+    else if (Album == null)
+    {
+        <div class="neon-alert neon-alert-warning">
+            <span class="alert-icon">⚠️</span>
+            <span>Album not found.</span>
+        </div>
+    }
+    else
+    {
+        <div class="neon-card upload-form-card">
+            <EditForm Model="Album" OnValidSubmit="UpdateAlbum">
+                <DataAnnotationsValidator />
+
+                <!-- Album Title -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="label-icon">📀</span> Album Title
+                    </label>
+                    <InputText @bind-Value="Album.Title" class="neon-input" />
+                    <ValidationMessage For="@(() => Album.Title)" />
+                </div>
+
+                <!-- Artist -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="label-icon">🎸</span> Artist
+                    </label>
+                    <InputText @bind-Value="Album.Artist" class="neon-input" />
+                    <ValidationMessage For="@(() => Album.Artist)" />
+                </div>
+
+                <!-- Genre -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="label-icon">🎸</span> Genre
+                    </label>
+                    <InputSelect class="neon-select" @bind-Value="Album.Genre">
+                        <option value="">Select Genre</option>
+                        @foreach (var genre in Genres)
+                        {
+                            <option value="@genre">@genre</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => Album.Genre)" />
+                </div>
+
+                <!-- Year -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="label-icon">📅</span> Year
+                        <span class="optional-badge">optional</span>
+                    </label>
+                    <InputNumber class="neon-input"
+                                 @bind-Value="Album.Year"
+                                 placeholder="e.g. 1999" />
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="label-icon">📝</span> Description
+                        <span class="word-count">(@DescriptionLength characters)</span>
+                    </label>
+                    <InputTextArea @bind-Value="Album.Description" class="neon-textarea" rows="6" />
+                    <ValidationMessage For="@(() => Album.Description)" />
+                    @if (DescriptionLength < 50)
+                    {
+                        <div class="validation-message">Description must be at least 50 characters (currently: @DescriptionLength)</div>
+                    }
+                </div>
+
+                <!-- Links -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="label-icon">🔗</span> Listen Links
+                        <span class="link-count">(@ActiveLinkCount active)</span>
+                    </label>
+
+                    @for (int i = 0; i < Album.Links.Count; i++)
+                    {
+                        var index = i;
+                        <div class="link-item">
+                            <InputText @bind-Value="Album.Links[index].Url"
+                                       class="neon-input"
+                                       placeholder="https://..." />
+                            @if (Album.Links.Count > 1)
+                            {
+                                <button type="button" class="remove-link-btn" @onclick="() => RemoveLink(index)">
+                                    <span class="btn-icon">🗑️</span>
+                                </button>
+                            }
+                        </div>
+                    }
+
+                    <button type="button" class="neon-btn secondary add-link-btn" @onclick="AddLink">
+                        <span class="btn-icon">➕</span> Add Another Link
+                    </button>
+
+                    <!-- Show warning if no valid links -->
+                    @if (ActiveLinkCount == 0)
+                    {
+                        <div class="validation-message">
+                            ⚠️ At least one valid link is required
+                        </div>
+                    }
+                </div>
+
+                <!-- Current Image Preview -->
+                @if (Album.Image != null)
+                {
+                    <div class="form-group">
+                        <label class="form-label">
+                            <span class="label-icon">🖼️</span> Current Cover Image
+                        </label>
+                        <div class="current-image-preview">
+                            <img src="@($"data:image/png;base64,{Convert.ToBase64String(Album.Image)}")"
+                                 class="album-cover-preview"
+                                 alt="Current cover" />
+                            <button type="button" class="neon-btn secondary remove-image-btn" @onclick="RemoveImage">
+                                <span class="btn-icon">🗑️</span> Remove Image
+                            </button>
+                        </div>
+                    </div>
+                }
+
+                <!-- New Image Upload -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="label-icon">📷</span>
+                        @(Album.Image == null ? "Upload Cover Image" : "Replace Cover Image")
+                    </label>
+                    <InputFile class="file-input" OnChange="OnInputFileChange" />
+                    <div class="file-hint">Select a new image to replace the current one</div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="form-actions">
+                    <button type="submit" class="neon-btn primary" disabled="@(!IsFormValid || isSubmitting)">
+                        @if (isSubmitting)
+                        {
+                            <span class="btn-icon">⏳</span>
+                            <span>Updating...</span>
+                        }
+                        else
+                        {
+                            <span class="btn-icon">💾</span>
+                            <span>Update Album</span>
+                        }
+                    </button>
+
+                    <button type="button" class="neon-btn danger" @onclick="ShowDeleteDialog">
+                        <span class="btn-icon">🗑️</span> Delete Album
+                    </button>
+
+                    <button type="button" class="neon-btn secondary" @onclick="GoBack">
+                        <span class="btn-icon">↩️</span> Cancel
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    }
+</div>
+
+<!-- Delete Confirmation Modal -->
+@if (ShowDeleteConfirm)
+{
+    <div class="modal-overlay">
+        <div class="neon-card modal-card">
+            <h3 class="modal-title">
+                <span class="title-icon">⚠️</span> Delete Album
+            </h3>
+            <p class="modal-text">
+                Are you sure you want to delete "<strong>@Album?.Title</strong>" by <strong>@Album?.Artist</strong>?
+                This action cannot be undone.
+            </p>
+            <div class="modal-actions">
+                <button class="neon-btn danger" @onclick="DeleteAlbum" disabled="@isSubmitting">
+                    @if (isSubmitting)
+                    {
+                        <span>Deleting...</span>
+                    }
+                    else
+                    {
+                        <span class="btn-icon">🗑️</span>
+                        <span>Yes, Delete It</span>
+                    }
+                </button>
+                <button class="neon-btn secondary" @onclick="HideDeleteDialog" disabled="@isSubmitting">
+                    <span class="btn-icon">↩️</span> Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<string> Genres = new List<string>
+    {
+        "Rock", "Metal", "Rap", "Trap", "Electronic", "Jazz", "Classical", "R&B", "Pop",
+        "Folk", "Alternative", "Blues", "Punk", "Latin", "Funk",
+        "Ambient", "Experimental", "Indie", "???"
+    };
+
+    [Parameter] public Guid AlbumId { get; set; }
+
+    private Album? Album { get; set; }
+    private string? CurrentUserId { get; set; }
+    private bool CanEdit { get; set; }
+    private bool ShowDeleteConfirm { get; set; }
+    private IBrowserFile? NewImageFile { get; set; }
+    private bool isSubmitting = false;
+
+    private int DescriptionLength => Album?.Description?.Length ?? 0;
+    private int ActiveLinkCount => Album?.Links.Count(l => !string.IsNullOrWhiteSpace(l.Url)) ?? 0;
+
+    private bool IsFormValid => Album != null &&
+                               !string.IsNullOrWhiteSpace(Album.Title) &&
+                               !string.IsNullOrWhiteSpace(Album.Artist) &&
+                               !string.IsNullOrWhiteSpace(Album.Genre) &&
+                               DescriptionLength >= 50 &&
+                               ActiveLinkCount > 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Get current user info
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            CurrentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        }
+
+        // Load album
+        Album = await AlbumService.GetAlbumAsync(AlbumId);
+
+        if (CurrentUserId != null && Album != null)
+        {
+            CanEdit = CurrentUserId == Album.UserId;
+        }
+    }
+
+    private void AddLink()
+    {
+        Album?.Links.Add(new LinkItem());
+        StateHasChanged();
+    }
+
+    private void RemoveLink(int index)
+    {
+        if (Album?.Links.Count > 1 && index >= 0 && index < Album.Links.Count)
+        {
+            Album.Links.RemoveAt(index);
+            StateHasChanged();
+        }
+    }
+
+    private void RemoveImage()
+    {
+        if (Album != null)
+        {
+            Album.Image = null;
+            Album.ImageContentType = null;
+            NewImageFile = null;
+            StateHasChanged();
+        }
+    }
+
+    private void ShowDeleteDialog()
+    {
+        ShowDeleteConfirm = true;
+    }
+
+    private void HideDeleteDialog()
+    {
+        ShowDeleteConfirm = false;
+    }
+
+    private async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            if (!file.ContentType.StartsWith("image/"))
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Please select an image file.");
+                return;
+            }
+
+            if (file.Size > 4 * 1024 * 1024) // 4MB limit
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Image must be smaller than 4MB.");
+                return;
+            }
+
+            NewImageFile = file;
+
+            try
+            {
+                using var memoryStream = new MemoryStream();
+                await file.OpenReadStream(maxAllowedSize: 4 * 1024 * 1024).CopyToAsync(memoryStream);
+
+                if (Album != null)
+                {
+                    Album.Image = memoryStream.ToArray();
+                    Album.ImageContentType = file.ContentType;
+                }
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error uploading image: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task UpdateAlbum()
+    {
+        if (Album == null || !CanEdit || isSubmitting) return;
+
+        isSubmitting = true;
+
+        try
+        {
+            // Remove empty links before saving
+            Album.Links = Album.Links.Where(link => !string.IsNullOrWhiteSpace(link.Url)).ToList();
+
+            // Ensure at least one link remains
+            if (!Album.Links.Any())
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "At least one valid link is required.");
+                return;
+            }
+
+            // Update album
+            await AlbumService.UpdateAlbumAsync(Album);
+
+            // Redirect to album page
+            Nav.NavigateTo($"/album/{AlbumId}");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error updating album: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task DeleteAlbum()
+    {
+        if (Album == null || !CanEdit || isSubmitting) return;
+
+        isSubmitting = true;
+
+        try
+        {
+            await AlbumService.DeleteAlbumAsync(AlbumId);
+            ShowDeleteConfirm = false;
+            Nav.NavigateTo("/profile");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error deleting album: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo($"/album/{AlbumId}");
+    }
+}

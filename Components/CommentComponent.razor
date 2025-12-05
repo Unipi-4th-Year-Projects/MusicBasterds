@@ -1,0 +1,138 @@
+﻿@using MusicBasterds.Models
+@using Microsoft.AspNetCore.Identity
+@inject Services.AlbumService AlbumService
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager Nav
+
+<div class="comment-item" style="margin-left: @GetIndentation()px">
+    <div class="comment-header">
+        <div class="comment-author">
+            <div class="author-avatar">@Comment.UserName[0]</div>
+            <div class="author-info">
+                <strong class="author-name">@Comment.UserName</strong>
+                @if (Comment.UserId == AlbumOwnerId)
+                {
+                    <span class="owner-badge" style="font-size: 0.7rem; padding: 0.1rem 0.4rem;">OWNER</span>
+                }
+                <span class="comment-date">@Comment.PostedAt.ToString("MMM dd, yyyy HH:mm")</span>
+            </div>
+        </div>
+    </div>
+    <p class="comment-content">@Comment.Content</p>
+
+    <!-- Owner Response -->
+    @if (!string.IsNullOrEmpty(Comment.OwnerResponse) && Comment.UserId != AlbumOwnerId)
+    {
+        <div class="owner-response">
+            <div class="response-header">
+                <span class="owner-badge">🎵 Album Owner</span>
+                <strong>@AlbumOwnerName</strong> responded:
+            </div>
+            <p class="response-content">@Comment.OwnerResponse</p>
+            <span class="response-date">@Comment.ResponseDate?.ToString("MMM dd, yyyy HH:mm")</span>
+        </div>
+    }
+
+    <!-- Reply Button and View Replies -->
+    @if (CurrentUserId != null)
+    {
+        <div class="comment-actions">
+            <button class="reply-btn" @onclick="ToggleReply">
+                <span class="btn-icon">↩️</span> Reply
+            </button>
+
+            @if (Comment.Replies.Count > 0)
+            {
+                <button class="view-replies-btn" @onclick="ToggleReplies">
+                    <span class="btn-icon">@(Comment.ShowReplies ? "▼" : "▶")</span>
+                    @Comment.Replies.Count @(Comment.Replies.Count == 1 ? "reply" : "replies")
+                </button>
+            }
+        </div>
+    }
+
+    <!-- Reply Input -->
+    @if (ShowReplyInput && CurrentUserId != null)
+    {
+        <div class="reply-input-section">
+            <textarea class="reply-textarea"
+                      @bind="ReplyText"
+                      rows="3"
+                      placeholder="Write your reply..."></textarea>
+            <div class="reply-actions">
+                <button class="reply-submit-btn" @onclick="SubmitReply" disabled="@string.IsNullOrWhiteSpace(ReplyText)">
+                    <span class="btn-icon">💭</span> Post Reply
+                </button>
+                <button class="reply-cancel-btn" @onclick="ToggleReply">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    }
+
+    <!-- Nested Replies -->
+    @if (Comment.ShowReplies && Comment.Replies.Count > 0)
+    {
+        <div class="replies-container">
+            @foreach (var reply in Comment.Replies.OrderBy(r => r.PostedAt))
+            {
+                <CommentComponent Comment="reply"
+                                  CurrentUserId="CurrentUserId"
+                                  CurrentUserName="CurrentUserName"
+                                  AlbumOwnerId="AlbumOwnerId"
+                                  AlbumOwnerName="AlbumOwnerName"
+                                  AlbumId="AlbumId"
+                                  OnReplySubmitted="OnReplySubmitted"
+                                  NestingLevel="@(NestingLevel + 1)" />
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Comment Comment { get; set; } = new();
+    [Parameter] public string? CurrentUserId { get; set; }
+    [Parameter] public string? CurrentUserName { get; set; }
+    [Parameter] public string AlbumOwnerId { get; set; } = string.Empty;
+    [Parameter] public string AlbumOwnerName { get; set; } = string.Empty;
+    [Parameter] public Guid AlbumId { get; set; }
+    [Parameter] public EventCallback OnReplySubmitted { get; set; }
+    [Parameter] public int NestingLevel { get; set; } = 0;
+
+    private bool ShowReplyInput { get; set; } = false;
+    private string ReplyText { get; set; } = string.Empty;
+
+    private string GetIndentation()
+    {
+        return Math.Min(NestingLevel * 20, 100).ToString();
+    }
+
+    private void ToggleReply()
+    {
+        ShowReplyInput = !ShowReplyInput;
+        if (!ShowReplyInput)
+        {
+            ReplyText = string.Empty;
+        }
+    }
+
+    private void ToggleReplies()
+    {
+        Comment.ShowReplies = !Comment.ShowReplies;
+    }
+
+    private async Task SubmitReply()
+    {
+        if (string.IsNullOrWhiteSpace(ReplyText) || CurrentUserId == null || CurrentUserName == null)
+            return;
+
+        var reply = await AlbumService.AddReplyAsync(AlbumId, Comment.Id, CurrentUserId, CurrentUserName, ReplyText.Trim());
+
+        if (reply != null)
+        {
+            ReplyText = string.Empty;
+            ShowReplyInput = false;
+            await OnReplySubmitted.InvokeAsync();
+        }
+    }
+}

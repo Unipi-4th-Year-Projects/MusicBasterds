@@ -1,0 +1,214 @@
+﻿@page "/profile"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@attribute [Authorize]  // This ensures only logged-in users can access
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject AlbumService AlbumService
+@inject NavigationManager Nav
+
+<div class="neon-profile-container">
+    <div class="profile-header">
+        <h1 class="neon-title">
+            <span class="title-icon">👤</span> My Profile
+        </h1>
+        <div class="title-underline"></div>
+    </div>
+
+    @if (CurrentUserId == null)
+    {
+        <div class="neon-alert neon-alert-warning">
+            <span class="alert-icon">🔒</span>
+            <span>You need to <a href="/login" class="neon-link">login</a> to view your profile.</span>
+        </div>
+    }
+    else
+    {
+        <div class="profile-layout">
+            <!-- User Info Card -->
+            <div class="sidebar">
+                <div class="neon-card user-info-card">
+                    <div class="user-avatar-large">
+                        @(CurrentUserName?[0] ?? '?')
+                    </div>
+
+                    <h2 class="username">@CurrentUserName</h2>
+
+                    <div class="user-details">
+                        <div class="detail-item">
+                            <span class="detail-icon">📧</span>
+                            <div class="detail-content">
+                                <div class="detail-label">Email</div>
+                                <div class="detail-value">@CurrentUserEmail</div>
+                            </div>
+                        </div>
+
+                        <div class="detail-divider"></div>
+
+                        <div class="detail-item">
+                            <span class="detail-icon">⭐</span>
+                            <div class="detail-content">
+                                <div class="detail-label">Average Rating</div>
+                                <div class="detail-value rating-value">
+                                    @UserAverageRating.ToString("F1")<span class="rating-max">/100</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="detail-divider"></div>
+
+                        <div class="detail-item">
+                            <span class="detail-icon">📀</span>
+                            <div class="detail-content">
+                                <div class="detail-label">Albums Uploaded</div>
+                                <div class="detail-value">@UserAlbums.Count</div>
+                            </div>
+                        </div>
+
+                        @if (CurrentUser != null && CurrentUser.JoinDate != default)
+                        {
+                            <div class="detail-divider"></div>
+                            <div class="detail-item">
+                                <span class="detail-icon">📅</span>
+                                <div class="detail-content">
+                                    <div class="detail-label">Member Since</div>
+                                    <div class="detail-value">@CurrentUser.JoinDate.ToString("MMMM yyyy")</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    @if (TopRatedAlbums.Any())
+                    {
+                        <div class="top-albums-section">
+                            <h3 class="section-title">
+                                <span class="section-icon">🏆</span>
+                                Your Top Rated
+                            </h3>
+                            <div class="top-albums-list">
+                                @for (int i = 0; i < TopRatedAlbums.Count; i++)
+                                {
+                                    var album = TopRatedAlbums[i];
+                                    var medalClass = i == 0 ? "gold" : i == 1 ? "silver" : i == 2 ? "bronze" : "";
+                                    <div class="top-album-item @medalClass">
+                                        <div class="album-rank @medalClass">@(i + 1)</div>
+                                        <div class="album-info">
+                                            <div class="album-title-mini">@album.Title</div>
+                                            <div class="album-rating-mini">
+                                                <span class="rating-icon">⭐</span>
+                                                @album.AverageRating.ToString("F1")/100
+                                            </div>
+                                        </div>
+                                        @if (i < 3)
+                                        {
+                                            <div class="medal-badge">
+                                                @(i == 0 ? "🥇" : i == 1 ? "🥈" : "🥉")
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <button class="neon-btn upload-btn-sidebar" @onclick="GoToUpload">
+                        <span class="btn-icon">➕</span> Upload New Album
+                    </button>
+                </div>
+            </div>
+
+            <!-- User Albums -->
+            <div class="main-content">
+                <div class="albums-header">
+                    <h2 class="section-title-main">
+                        <span class="title-icon">📀</span>
+                        My Albums
+                        <span class="album-count">(@UserAlbums.Count)</span>
+                    </h2>
+                </div>
+
+                @if (UserAlbums.Count == 0)
+                {
+                    <div class="empty-albums-state">
+                        <div class="empty-icon">🎵</div>
+                        <h3 class="empty-title">No Albums Yet</h3>
+                        <p class="empty-text">
+                            Start sharing your favorite music with the community!
+                        </p>
+                        <button class="neon-btn upload-btn-main" @onclick="GoToUpload">
+                            <span class="btn-icon">🚀</span> Upload Your First Album
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="albums-grid">
+                        @foreach (var album in UserAlbums.OrderByDescending(a => a.UploadDate))
+                        {
+                            <div class="album-card-wrapper">
+                                <AlbumCard Album="@album" />
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string? CurrentUserId = null;
+    private string? CurrentUserName = null;
+    private string? CurrentUserEmail = null;
+    private ApplicationUser? CurrentUser = null;
+    
+    private List<Album> UserAlbums = new();
+    private double UserAverageRating;
+    private List<Album> TopRatedAlbums = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Get current user info from authentication state
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            CurrentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            CurrentUserName = user.Identity.Name;
+            CurrentUserEmail = user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+            
+            if (CurrentUserId != null)
+            {
+                // Load the full ApplicationUser from database
+                CurrentUser = await UserManager.FindByIdAsync(CurrentUserId);
+                
+                // Load user's albums
+                UserAlbums = await AlbumService.GetAlbumsForUserAsync(CurrentUserId);
+                
+                // Calculate average rating
+                UserAverageRating = await CalculateUserAverageRating();
+                
+                // Get top rated albums
+                TopRatedAlbums = UserAlbums
+                    .Where(a => a.Ratings.Count > 0)
+                    .OrderByDescending(a => a.AverageRating)
+                    .Take(5)
+                    .ToList();
+            }
+        }
+    }
+
+    private async Task<double> CalculateUserAverageRating()
+    {
+        if (!UserAlbums.Any()) return 0;
+        
+        var albumsWithRatings = UserAlbums.Where(a => a.Ratings.Count > 0).ToList();
+        if (!albumsWithRatings.Any()) return 0;
+        
+        return albumsWithRatings.Average(a => a.AverageRating);
+    }
+
+    private void GoToUpload() => Nav.NavigateTo("/upload");
+}

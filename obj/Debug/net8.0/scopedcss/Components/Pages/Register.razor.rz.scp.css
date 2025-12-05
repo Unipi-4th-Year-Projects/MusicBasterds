@@ -1,0 +1,204 @@
+.register-container[b-th3fmi78ec] {
+    background: #1b1b1c;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    font-family: 'Segoe UI', sans-serif;
+    position: relative;
+    overflow: hidden;
+}
+
+.register-box[b-th3fmi78ec] {
+    background: #2d2d2e;
+    border: 1px solid #3d3d3e;
+    border-radius: 12px;
+    padding: 3rem;
+    width: 100%;
+    max-width: 450px;
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s ease;
+}
+
+    .register-box:hover[b-th3fmi78ec] {
+        border-color: #d5fc76;
+        box-shadow: 0 4px 15px rgba(213, 252, 118, 0.1);
+    }
+
+.register-header[b-th3fmi78ec] {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.neon-title[b-th3fmi78ec] {
+    color: #d5fc76;
+    font-size: 2.2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.5px;
+}
+
+.neon-subtitle[b-th3fmi78ec] {
+    color: #d5fc76;
+    opacity: 0.8;
+    font-size: 1rem;
+    margin: 0;
+}
+
+.neon-alert[b-th3fmi78ec] {
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+}
+
+.neon-alert-error[b-th3fmi78ec] {
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid #ff6b6b;
+    color: #ff6b6b;
+}
+
+.neon-alert-success[b-th3fmi78ec] {
+    background: rgba(213, 252, 118, 0.1);
+    border: 1px solid #d5fc76;
+    color: #d5fc76;
+}
+
+.form-group[b-th3fmi78ec] {
+    margin-bottom: 1.5rem;
+}
+
+.neon-label[b-th3fmi78ec] {
+    display: block;
+    color: #d5fc76;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.neon-input[b-th3fmi78ec] {
+    background: #2d2d2e;
+    border: 1px solid #3d3d3e;
+    border-radius: 6px;
+    color: #e8e8e8;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+    .neon-input[b-th3fmi78ec]::placeholder {
+        color: #a0a0a0;
+        opacity: 0.7;
+    }
+
+    .neon-input:focus[b-th3fmi78ec] {
+        outline: none;
+        border-color: #d5fc76;
+        box-shadow: 0 0 0 0.2rem rgba(213, 252, 118, 0.25);
+    }
+
+.neon-btn[b-th3fmi78ec] {
+    background: transparent;
+    color: #d5fc76;
+    border: 2px solid #d5fc76;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 6px;
+    font-family: 'Segoe UI', sans-serif;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+    .neon-btn:hover:not(:disabled)[b-th3fmi78ec] {
+        background: rgba(213, 252, 118, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .neon-btn:disabled[b-th3fmi78ec] {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+.neon-btn-primary[b-th3fmi78ec] {
+    background: rgba(213, 252, 118, 0.1);
+    margin-top: 0.5rem;
+}
+
+.register-footer[b-th3fmi78ec] {
+    text-align: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #3d3d3e;
+}
+
+.neon-text[b-th3fmi78ec] {
+    color: #d5fc76;
+    opacity: 0.8;
+    font-size: 0.9rem;
+}
+
+.neon-link[b-th3fmi78ec] {
+    color: #d5fc76;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+    .neon-link:hover[b-th3fmi78ec] {
+        text-decoration: underline;
+    }
+
+/* Form validation styling */
+.neon-input:invalid[b-th3fmi78ec] {
+    border-color: #ff6b6b;
+}
+
+.neon-input:valid[b-th3fmi78ec] {
+    border-color: #d5fc76;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .register-container[b-th3fmi78ec] {
+        padding: 1rem;
+    }
+
+    .register-box[b-th3fmi78ec] {
+        padding: 2rem;
+    }
+
+    .neon-title[b-th3fmi78ec] {
+        font-size: 1.8rem;
+    }
+
+    .neon-subtitle[b-th3fmi78ec] {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .register-box[b-th3fmi78ec] {
+        padding: 1.5rem;
+    }
+
+    .neon-title[b-th3fmi78ec] {
+        font-size: 1.5rem;
+    }
+
+    .form-group[b-th3fmi78ec] {
+        margin-bottom: 1rem;
+    }
+}

@@ -1,0 +1,426 @@
+﻿@page "/album/{AlbumId:guid}"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject AlbumService AlbumService
+@inject NavigationManager Nav
+@inject IJSRuntime JSRuntime
+
+<div class="neon-album-container">
+    @if (Album == null)
+    {
+        <div class="neon-alert neon-alert-warning">
+            <span class="alert-icon">⚠️</span>
+            <span>Album not found. It may have been removed or the link is incorrect.</span>
+        </div>
+        <button class="neon-btn" @onclick="NavigateToHome">
+            ← Back to Home
+        </button>
+    }
+    else
+    {
+        <div class="album-header">
+            <button class="back-button" @onclick="NavigateToHome">
+                <span class="back-icon">←</span> Back
+            </button>
+            <h1 class="page-title">
+                <span class="title-icon">📀</span> Album Details
+            </h1>
+        </div>
+
+        <div class="album-layout">
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Album Info Card -->
+                <div class="neon-card album-info-card">
+                    @if (Album.Image != null)
+                    {
+                        <div class="album-cover-container">
+                            <img src="@($"data:image/png;base64,{Convert.ToBase64String(Album.Image)}")"
+                                 class="album-cover"
+                                 alt="@Album.Title cover" />
+                            <div class="cover-glow"></div>
+                        </div>
+                    }
+
+                    <div class="album-details">
+                        <h2 class="album-title">@Album.Title</h2>
+                        <h3 class="album-artist">by @Album.Artist</h3>
+
+                        <div class="album-meta">
+                            <div class="meta-item">
+                                <span class="meta-icon">🎸</span>
+                                <span class="meta-label">Genre:</span>
+                                <span class="meta-value">@Album.Genre</span>
+                            </div>
+                            @if (Album.Year.HasValue)
+                            {
+                                <div class="meta-item">
+                                    <span class="meta-icon">📅</span>
+                                    <span class="meta-label">Year:</span>
+                                    <span class="meta-value">@Album.Year</span>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="album-description">
+                            <div class="description-header">
+                                <span class="desc-icon">📝</span> Description
+                            </div>
+                            <p class="description-text">@Album.Description</p>
+                        </div>
+
+                        @if (Album.Links.Any())
+                        {
+                            <div class="listen-links">
+                                <h4 class="links-title">
+                                    <span class="links-icon">🎵</span> Listen Now
+                                </h4>
+                                <div class="links-grid">
+                                    @foreach (var link in Album.Links)
+                                    {
+                                        <a href="@link.Url" target="_blank" class="listen-button">
+                                            <span class="listen-icon">▶</span> Listen
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        @if (CurrentUserId == Album.UserId)
+                        {
+                            <div class="album-actions">
+                                <button class="neon-btn secondary" @onclick="NavigateToEdit">
+                                    <span class="btn-icon">✏️</span> Edit Album
+                                </button>
+                                <button class="neon-btn danger" @onclick="ShowDeleteDialog">
+                                    <span class="btn-icon">🗑️</span> Delete Album
+                                </button>
+                            </div>
+                        }
+
+                        <div class="upload-info">
+                            <span class="info-icon">👤</span>
+                            Uploaded by <strong>@Album.UserName</strong> on
+                            <strong>@Album.UploadDate.ToString("MMM dd, yyyy")</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rating Section -->
+                <div class="neon-card rating-card">
+                    <h3 class="card-title">
+                        <span class="title-icon">⭐</span> Rate This Album
+                    </h3>
+
+                    @if (CurrentUserId == null)
+                    {
+                        <div class="login-prompt">
+                            <span class="prompt-icon">🔒</span>
+                            Please <a href="/login" class="neon-link">login</a> to rate this album
+                        </div>
+                    }
+                    else if (HasUserRated)
+                    {
+                        <div class="rated-message">
+                            <span class="check-icon">✓</span>
+                            You've already rated this album: <strong>@UserRating/100</strong>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="rating-input">
+                            <div class="slider-container">
+                                <input type="range"
+                                       class="neon-slider"
+                                       min="0"
+                                       max="100"
+                                       @bind="NewRatingValue"
+                                       @bind:event="oninput" />
+                                <div class="slider-track" style="width: @(NewRatingValue)%"></div>
+                            </div>
+                            <div class="rating-display">@NewRatingValue/100</div>
+                            <button class="neon-btn rating-submit" @onclick="SubmitRating">
+                                <span class="btn-icon">🚀</span> Submit Rating
+                            </button>
+                        </div>
+                    }
+
+                    <div class="average-rating">
+                        <div class="rating-value">
+                            <span class="rating-icon">📊</span>
+                            Average Rating:
+                            @if (Album.AverageRating >= 0)
+                            {
+                                <strong class="rating-number">@Album.DisplayRating/100</strong>
+                            }
+                            else
+                            {
+                                <strong class="rating-number">Not rated yet</strong>
+                            }
+                        </div>
+                        <div class="rating-count">
+                            Based on @Album.Ratings.Count rating@(Album.Ratings.Count != 1 ? "s" : "")
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comments Section -->
+                <div class="neon-card comments-card">
+                    <h3 class="card-title">
+                        <span class="title-icon">💬</span>
+                        Comments
+                        <span class="comment-count">(@(Album.Comments.Count + Album.Comments.Sum(c => c.Replies.Count)))</span>
+                    </h3>
+
+                    <!-- Add Comment -->
+                    @if (CurrentUserId == null)
+                    {
+                        <div class="login-prompt">
+                            <span class="prompt-icon">🔒</span>
+                            Please <a href="/login" class="neon-link">login</a> to comment
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="add-comment-section">
+                            <div class="comment-input-header">
+                                <div class="commenter-avatar">@(CurrentUserName?[0] ?? '?')</div>
+                                <span class="commenter-name">@CurrentUserName</span>
+                            </div>
+                            <textarea class="neon-textarea"
+                                      @bind="NewComment"
+                                      rows="4"
+                                      placeholder="Share your thoughts about this album..."></textarea>
+                            <button class="neon-btn comment-submit"
+                                    @onclick="SubmitTopLevelComment"
+                                    disabled="@string.IsNullOrWhiteSpace(NewComment)">
+                                <span class="btn-icon">💭</span> Post Comment
+                            </button>
+                        </div>
+                    }
+
+                    <!-- Comments List -->
+                    <div class="comments-list">
+                        @if (Album.Comments.Count == 0)
+                        {
+                            <div class="empty-comments">
+                                <div class="empty-icon">💬</div>
+                                <p class="empty-text">No comments yet. Be the first to share your thoughts!</p>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var comment in Album.Comments.Where(c => c.ParentCommentId == null).OrderByDescending(c => c.PostedAt))
+                            {
+                                <CommentComponent Comment="comment"
+                                                  CurrentUserId="CurrentUserId"
+                                                  CurrentUserName="CurrentUserName"
+                                                  AlbumOwnerId="Album.UserId"
+                                                  AlbumOwnerName="Album.UserName"
+                                                  AlbumId="AlbumId"
+                                                  OnReplySubmitted="RefreshAlbumData" />
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Stats -->
+            <div class="sidebar">
+                <div class="neon-card stats-card">
+                    <h3 class="card-title">
+                        <span class="title-icon">📊</span> Statistics
+                    </h3>
+
+                    <div class="stats-list">
+                        <div class="stat-item">
+                            <span class="stat-icon">⭐</span>
+                            <div class="stat-content">
+                                <div class="stat-label">Average Rating</div>
+                                <div class="stat-value">
+                                    @if (Album.AverageRating >= 0)
+                                    {
+                                        <span>@Album.DisplayRating/100</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="no-rating">Not rated</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-divider"></div>
+
+                        <div class="stat-item">
+                            <span class="stat-icon">💬</span>
+                            <div class="stat-content">
+                                <div class="stat-label">Comments</div>
+                                <div class="stat-value">@(Album.Comments.Count + Album.Comments.Sum(c => c.Replies.Count))</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-divider"></div>
+
+                        <div class="stat-item">
+                            <span class="stat-icon">🔢</span>
+                            <div class="stat-content">
+                                <div class="stat-label">Total Ratings</div>
+                                <div class="stat-value">@Album.Ratings.Count</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-divider"></div>
+
+                        <div class="stat-item">
+                            <span class="stat-icon">📅</span>
+                            <div class="stat-content">
+                                <div class="stat-label">Uploaded</div>
+                                <div class="stat-value">@Album.UploadDate.ToString("MMM dd, yyyy")</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        @if (ShowDeleteConfirm)
+        {
+            <div class="modal-overlay">
+                <div class="neon-card modal-card">
+                    <h3 class="modal-title">
+                        <span class="title-icon">⚠️</span> Delete Album
+                    </h3>
+                    <p class="modal-text">
+                        Are you sure you want to delete "<strong>@Album?.Title</strong>" by <strong>@Album?.Artist</strong>?
+                        This action cannot be undone and all ratings and comments will be lost.
+                    </p>
+                    <div class="modal-actions">
+                        <button class="neon-btn danger" @onclick="DeleteAlbum">
+                            <span class="btn-icon">🗑️</span> Yes, Delete It
+                        </button>
+                        <button class="neon-btn secondary" @onclick="HideDeleteDialog">
+                            <span class="btn-icon">↩️</span> Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public Guid AlbumId { get; set; }
+
+    private Album? Album { get; set; }
+    private string? CurrentUserId { get; set; }
+    private string? CurrentUserName { get; set; }
+    private string? CurrentUserEmail { get; set; }
+    private string NewComment { get; set; } = string.Empty;
+    private int NewRatingValue { get; set; } = 80;
+    private bool ShowDeleteConfirm { get; set; }
+
+    private bool HasUserRated => CurrentUserId != null &&
+                                 Album?.Ratings.Any(r => r.UserId == CurrentUserId) == true;
+
+    private int UserRating => Album?.Ratings.FirstOrDefault(r => r.UserId == CurrentUserId)?.Value ?? 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAlbumData();
+    }
+
+    private async Task LoadAlbumData()
+    {
+        // Load album
+        Album = await AlbumService.GetAlbumAsync(AlbumId);
+
+        // Load current user info
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            CurrentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            CurrentUserName = user.Identity.Name;
+            CurrentUserEmail = user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+        }
+    }
+
+    private async Task RefreshAlbumData()
+    {
+        await LoadAlbumData();
+        StateHasChanged();
+    }
+
+    private void NavigateToHome()
+    {
+        Nav.NavigateTo("/home");
+    }
+
+    private void NavigateToEdit()
+    {
+        if (Album != null)
+        {
+            Nav.NavigateTo($"/edit-album/{Album.Id}");
+        }
+    }
+
+    private void ShowDeleteDialog()
+    {
+        ShowDeleteConfirm = true;
+    }
+
+    private void HideDeleteDialog()
+    {
+        ShowDeleteConfirm = false;
+    }
+
+    private async Task SubmitRating()
+    {
+        if (CurrentUserId == null || CurrentUserName == null || Album == null) return;
+
+        var success = await AlbumService.AddOrUpdateRatingAsync(
+            AlbumId, CurrentUserId, CurrentUserName, NewRatingValue);
+
+        if (success)
+        {
+            await LoadAlbumData();
+            StateHasChanged();
+        }
+    }
+
+    private async Task SubmitTopLevelComment()
+    {
+        if (CurrentUserId == null || CurrentUserName == null ||
+            Album == null || string.IsNullOrWhiteSpace(NewComment))
+            return;
+
+        await AlbumService.AddCommentAsync(AlbumId, CurrentUserId,
+            CurrentUserName, NewComment.Trim());
+
+        await LoadAlbumData();
+        NewComment = string.Empty;
+        StateHasChanged();
+    }
+
+    private async Task DeleteAlbum()
+    {
+        if (Album == null || CurrentUserId != Album.UserId) return;
+
+        try
+        {
+            await AlbumService.DeleteAlbumAsync(Album.Id);
+            ShowDeleteConfirm = false;
+            Nav.NavigateTo("/profile");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error deleting album: {ex.Message}");
+        }
+    }
+}

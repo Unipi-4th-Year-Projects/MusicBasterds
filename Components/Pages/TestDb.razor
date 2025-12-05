@@ -1,0 +1,71 @@
+﻿@page "/testdb"
+@inject Data.AppDbContext DbContext
+@using Microsoft.EntityFrameworkCore  <!-- Add this line -->
+
+<h3>Database Connection Test</h3>
+
+@if (_isTesting)
+{
+    <p>Testing database connection...</p>
+}
+else
+{
+    @if (_isConnected)
+    {
+        <div class="alert alert-success">
+            <h4>✅ Database connection successful!</h4>
+            <p>Database: @_providerName</p>
+            <p>Albums in database: @_albumCount</p>
+            <p>Users in database: @_userCount</p>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger">
+            <h4>❌ Database connection failed!</h4>
+            <p>Error: @_errorMessage</p>
+        </div>
+    }
+}
+
+<button class="btn btn-primary" @onclick="TestConnection">Test Connection Again</button>
+
+@code {
+    private bool _isTesting = true;
+    private bool _isConnected = false;
+    private string _providerName = string.Empty;
+    private int _albumCount = 0;
+    private int _userCount = 0;
+    private string _errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await TestConnection();
+    }
+
+    private async Task TestConnection()
+    {
+        _isTesting = true;
+        StateHasChanged();
+
+        try
+        {
+            _isConnected = await DbContext.Database.CanConnectAsync();
+            _providerName = DbContext.Database.ProviderName ?? "Unknown";
+            
+            if (_isConnected)
+            {
+                _albumCount = await DbContext.Albums.CountAsync();
+                _userCount = await DbContext.Users.CountAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _isConnected = false;
+            _errorMessage = ex.Message;
+        }
+
+        _isTesting = false;
+        StateHasChanged();
+    }
+}

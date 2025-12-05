@@ -1,0 +1,188 @@
+.welcome-container[b-9i59z5odd0] {
+    background: #1b1b1c;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    font-family: 'Segoe UI', sans-serif;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.logo-container[b-9i59z5odd0] {
+    position: relative;
+    margin-bottom: 3rem;
+    width: 200px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.neon-logo[b-9i59z5odd0] {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    z-index: 2;
+    position: relative;
+}
+
+.logo-glow[b-9i59z5odd0] {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, rgba(213, 252, 118, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    z-index: 1;
+}
+
+.neon-title[b-9i59z5odd0] {
+    color: #d5fc76;
+    font-size: 3.5rem;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+    letter-spacing: 1px;
+}
+
+.neon-subtitle[b-9i59z5odd0] {
+    color: #d5fc76;
+    font-size: 1.3rem;
+    opacity: 0.8;
+    margin-bottom: 3rem;
+    max-width: 600px;
+    line-height: 1.6;
+}
+
+.button-group[b-9i59z5odd0] {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.neon-btn[b-9i59z5odd0] {
+    background: transparent;
+    color: #d5fc76;
+    border: 2px solid #d5fc76;
+    padding: 1rem 2.5rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 6px;
+    font-family: 'Segoe UI', sans-serif;
+    position: relative;
+    overflow: hidden;
+}
+
+    .neon-btn:hover:not(:disabled)[b-9i59z5odd0] {
+        background: rgba(213, 252, 118, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .neon-btn:disabled[b-9i59z5odd0] {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+.neon-btn-primary[b-9i59z5odd0] {
+    background: rgba(213, 252, 118, 0.1);
+}
+
+.neon-btn-outline[b-9i59z5odd0] {
+    background: transparent;
+}
+
+    .neon-btn-outline:hover[b-9i59z5odd0] {
+        background: rgba(213, 252, 118, 0.1);
+    }
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .neon-title[b-9i59z5odd0] {
+        font-size: 2.5rem;
+    }
+
+    .neon-subtitle[b-9i59z5odd0] {
+        font-size: 1.1rem;
+        padding: 0 1rem;
+    }
+
+    .logo-container[b-9i59z5odd0] {
+        width: 150px;
+        height: 150px;
+    }
+
+    .logo-glow[b-9i59z5odd0] {
+        width: 140px;
+        height: 140px;
+    }
+
+    .button-group[b-9i59z5odd0] {
+        flex-direction: column;
+        gap: 1rem;
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .neon-btn[b-9i59z5odd0] {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .neon-title[b-9i59z5odd0] {
+        font-size: 2rem;
+    }
+
+    .neon-subtitle[b-9i59z5odd0] {
+        font-size: 1rem;
+    }
+
+    .logo-container[b-9i59z5odd0] {
+        width: 120px;
+        height: 120px;
+    }
+
+    .logo-glow[b-9i59z5odd0] {
+        width: 110px;
+        height: 110px;
+    }
+}
+
+/* Animation for page load */
+@keyframes fadeIn-b-9i59z5odd0 {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.logo-container[b-9i59z5odd0] {
+    animation: fadeIn-b-9i59z5odd0 0.8s ease-out;
+}
+
+.neon-title[b-9i59z5odd0] {
+    animation: fadeIn-b-9i59z5odd0 0.8s ease-out 0.2s both;
+}
+
+.neon-subtitle[b-9i59z5odd0] {
+    animation: fadeIn-b-9i59z5odd0 0.8s ease-out 0.4s both;
+}
+
+.button-group[b-9i59z5odd0] {
+    animation: fadeIn-b-9i59z5odd0 0.8s ease-out 0.6s both;
+}

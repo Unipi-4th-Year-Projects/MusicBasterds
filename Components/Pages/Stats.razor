@@ -1,0 +1,264 @@
+﻿@page "/stats"
+@inject AlbumService AlbumService
+
+<div class="neon-stats-container">
+    <div class="stats-header">
+        <h1 class="neon-title">📊 Statistics</h1>
+        <div class="title-underline"></div>
+        <p class="neon-subtitle">// Track the pulse of the MusicBasterds community</p>
+    </div>
+
+    <div class="stats-grid">
+        <!-- Weekly Stats Column -->
+        <div class="stats-column">
+            <!-- Top Albums This Week -->
+            <div class="stat-section">
+                <h2 class="section-title">
+                    <span class="title-icon">🔥</span>
+                    <span>Top Albums This Week</span>
+                    <div class="title-line"></div>
+                </h2>
+
+                @if (TopAlbumsThisWeek.Count == 0)
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <p class="empty-text">// No albums uploaded this week</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="cards-container">
+                        @for (int i = 0; i < TopAlbumsThisWeek.Count; i++)
+                        {
+                            var album = TopAlbumsThisWeek[i];
+                            <div class="neon-card album-card" style="animation-delay: @(i * 0.1)s">
+                                <div class="card-rank">@(i + 1)</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">@album.Title</h3>
+                                    <div class="card-artist">@album.Artist</div>
+                                    <div class="card-stats">
+                                        <div class="stat-item">
+                                            <span class="stat-icon">⭐</span>
+                                            <span class="stat-value">@album.AverageRating.ToString("F1")</span>
+                                            <span class="stat-label">/100</span>
+                                        </div>
+                                        <div class="stat-divider">|</div>
+                                        <div class="stat-item">
+                                            <span class="stat-icon">👤</span>
+                                            <span class="stat-value">@album.UserName</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-glow"></div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Top Users This Week -->
+            <div class="stat-section">
+                <h2 class="section-title">
+                    <span class="title-icon">🏆</span>
+                    <span>Top Users This Week</span>
+                    <div class="title-line"></div>
+                </h2>
+
+                @if (TopUsersThisWeek.Count == 0)
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">😴</div>
+                        <p class="empty-text">// No user activity this week</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="cards-container">
+                        @for (int i = 0; i < TopUsersThisWeek.Count; i++)
+                        {
+                            var user = TopUsersThisWeek[i];
+                            <div class="neon-card user-card" style="animation-delay: @(i * 0.1)s">
+                                <div class="card-rank trophy">@(i + 1)</div>
+                                <div class="user-avatar">@user.Username[0]</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">@user.Username</h3>
+                                    <div class="card-stats">
+                                        <div class="stat-item">
+                                            <span class="stat-icon">⭐</span>
+                                            <span class="stat-label">Avg Rating:</span>
+                                            <span class="stat-value">@user.AverageRating.ToString("F1")</span>
+                                            <span class="stat-label">/100</span>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span class="stat-icon">📀</span>
+                                            <span class="stat-value">@user.AlbumCount</span>
+                                            <span class="stat-label">album@(user.AlbumCount != 1 ? "s" : "")</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-glow"></div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- All Time Stats Column -->
+        <div class="stats-column">
+            <!-- Top Albums All Time -->
+            <div class="stat-section">
+                <h2 class="section-title">
+                    <span class="title-icon">⭐</span>
+                    <span>Top Albums of All Time</span>
+                    <div class="title-line"></div>
+                </h2>
+
+                <div class="cards-container">
+                    @for (int i = 0; i < TopAlbumsAllTime.Count; i++)
+                    {
+                        var album = TopAlbumsAllTime[i];
+                        var rankClass = i == 0 ? "gold" : i == 1 ? "silver" : i == 2 ? "bronze" : "";
+                        <div class="neon-card album-card @rankClass" style="animation-delay: @(i * 0.1)s">
+                            <div class="card-rank @rankClass">@(i + 1)</div>
+                            <div class="card-content">
+                                <h3 class="card-title">@album.Title</h3>
+                                <div class="card-artist">@album.Artist</div>
+                                <div class="card-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-icon">⭐</span>
+                                        <span class="stat-value">@album.AverageRating.ToString("F1")</span>
+                                        <span class="stat-label">/100</span>
+                                    </div>
+                                    <div class="stat-divider">|</div>
+                                    <div class="stat-item">
+                                        <span class="stat-icon">👤</span>
+                                        <span class="stat-value">@album.UserName</span>
+                                    </div>
+                                </div>
+                            </div>
+                            @if (i < 3)
+                            {
+                                <div class="trophy-badge">
+                                    @(i == 0 ? "🥇" : i == 1 ? "🥈" : "🥉")
+                                </div>
+                            }
+                            <div class="card-glow"></div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Latest Albums -->
+            <div class="stat-section">
+                <h2 class="section-title">
+                    <span class="title-icon">🆕</span>
+                    <span>Latest Albums</span>
+                    <div class="title-line"></div>
+                </h2>
+
+                <div class="cards-container">
+                    @for (int i = 0; i < LatestAlbums.Count; i++)
+                    {
+                        var album = LatestAlbums[i];
+                        <div class="neon-card album-card latest" style="animation-delay: @(i * 0.1)s">
+                            <div class="new-badge">NEW</div>
+                            <div class="card-content">
+                                <h3 class="card-title">@album.Title</h3>
+                                <div class="card-artist">@album.Artist</div>
+                                <div class="card-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-icon">🎵</span>
+                                        <span class="stat-value">@album.Genre</span>
+                                    </div>
+                                    <div class="stat-divider">|</div>
+                                    <div class="stat-item">
+                                        <span class="stat-icon">📅</span>
+                                        <span class="stat-value">@album.UploadDate.ToString("MMM dd, yyyy")</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-glow"></div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Stats Bar -->
+    <div class="summary-bar">
+        <div class="summary-item">
+            <div class="summary-icon">📀</div>
+            <div class="summary-content">
+                <div class="summary-value">@TotalAlbums</div>
+                <div class="summary-label">Total Albums</div>
+            </div>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-item">
+            <div class="summary-icon">🔥</div>
+            <div class="summary-content">
+                <div class="summary-value">@ThisWeekAlbumsCount</div>
+                <div class="summary-label">This Week</div>
+            </div>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-item">
+            <div class="summary-icon">👥</div>
+            <div class="summary-content">
+                <div class="summary-value">@TopUsersThisWeek.Count</div>
+                <div class="summary-label">Active Users</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Album> TopAlbumsAllTime = new();
+    private List<Album> TopAlbumsThisWeek = new();
+    private List<Album> LatestAlbums = new();
+    private List<UserStats> TopUsersThisWeek = new();
+    private int TotalAlbums = 0;
+    private int ThisWeekAlbumsCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStats();
+    }
+
+    private async Task LoadStats()
+    {
+        // Get all albums and calculate stats
+        var allAlbums = await AlbumService.GetAllAlbumsAsync();
+
+        // Calculate top albums all time (rated, sorted by average rating)
+        TopAlbumsAllTime = allAlbums
+            .Where(a => a.Ratings.Count > 0)
+            .OrderByDescending(a => a.AverageRating)
+            .Take(10)
+            .ToList();
+
+        // Calculate top albums this week (uploaded within last 7 days)
+        var oneWeekAgo = DateTime.Now.AddDays(-7);
+        TopAlbumsThisWeek = allAlbums
+            .Where(a => a.UploadDate >= oneWeekAgo && a.Ratings.Count > 0)
+            .OrderByDescending(a => a.AverageRating)
+            .Take(10)
+            .ToList();
+
+        // Get latest albums
+        LatestAlbums = allAlbums
+            .OrderByDescending(a => a.UploadDate)
+            .Take(10)
+            .ToList();
+
+        // Get top users (using existing method)
+        TopUsersThisWeek = await AlbumService.GetTopUsersAsync(10);
+
+        // Count stats
+        TotalAlbums = allAlbums.Count;
+        ThisWeekAlbumsCount = allAlbums.Count(a => a.UploadDate >= oneWeekAgo);
+    }
+}

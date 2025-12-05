@@ -1,0 +1,168 @@
+﻿@page "/register"
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager Nav
+@inject ILogger<Register> Logger
+
+<div class="register-container">
+    <div class="register-box">
+        <div class="register-header">
+            <h3 class="neon-title">[ Create Account ]</h3>
+            <p class="neon-subtitle">// Join the MusicBasterds community</p>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Message))
+        {
+            <div class="@(IsError ? "neon-alert neon-alert-error" : "neon-alert neon-alert-success")">
+                @if (IsError)
+                {
+                    <span>⚠️</span>
+                }
+                else
+                {
+                    <span>✅</span>
+                }
+                @Message
+            </div>
+        }
+
+        <div class="form-group">
+            <label class="neon-label">→ Username</label>
+            <input @bind="Username" class="neon-input" placeholder="Choose your username"
+                   @onkeypress="HandleKeyPress" />
+        </div>
+
+        <div class="form-group">
+            <label class="neon-label">→ Email</label>
+            <input type="email" @bind="Email" class="neon-input" placeholder="Enter your email"
+                   @onkeypress="HandleKeyPress" />
+        </div>
+
+        <div class="form-group">
+            <label class="neon-label">→ Password</label>
+            <input type="password" @bind="Password" class="neon-input" placeholder="Create secure password"
+                   @onkeypress="HandleKeyPress" />
+        </div>
+
+        <div class="form-group">
+            <label class="neon-label">→ Confirm Password</label>
+            <input type="password" @bind="ConfirmPassword" class="neon-input" placeholder="Confirm password"
+                   @onkeypress="HandleKeyPress" />
+        </div>
+
+        <button class="neon-btn neon-btn-primary" @onclick="RegisterUser" disabled="@isLoading">
+            @(isLoading ? "[ Creating Account... ]" : "[ Register Account ]")
+        </button>
+
+        <div class="register-footer">
+            <span class="neon-text">Already have an account? </span>
+            <a href="/login" class="neon-link">Login here</a>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string Username = "";
+    private string Email = "";
+    private string Password = "";
+    private string ConfirmPassword = "";
+    private string? Message;
+    private bool IsError;
+    private bool isLoading = false;
+
+    private async Task RegisterUser()
+    {
+        // Validation
+        if (string.IsNullOrWhiteSpace(Username) ||
+            string.IsNullOrWhiteSpace(Email) ||
+            string.IsNullOrWhiteSpace(Password) ||
+            string.IsNullOrWhiteSpace(ConfirmPassword))
+        {
+            Message = "Please fill in all fields.";
+            IsError = true;
+            return;
+        }
+
+        if (Password != ConfirmPassword)
+        {
+            Message = "Passwords do not match.";
+            IsError = true;
+            return;
+        }
+
+        if (Password.Length < 6)
+        {
+            Message = "Password must be at least 6 characters.";
+            IsError = true;
+            return;
+        }
+
+        isLoading = true;
+        Message = null;
+        IsError = false;
+
+        try
+        {
+            // Create ApplicationUser (not your old User model)
+            var user = new ApplicationUser
+            {
+                UserName = Username,
+                Email = Email,
+                DisplayName = Username,
+                JoinDate = DateTime.Now
+            };
+
+            // Use Identity to create user
+            var result = await UserManager.CreateAsync(user, Password);
+
+            if (result.Succeeded)
+            {
+                Logger.LogInformation("User {Username} created a new account.", Username);
+
+                // Optional: Add to default role
+                await UserManager.AddToRoleAsync(user, "User");
+
+                // Auto login after registration
+                await SignInManager.SignInAsync(user, isPersistent: false);
+
+                Message = "Registration successful! Redirecting...";
+                IsError = false;
+
+                // Clear form
+                Username = "";
+                Email = "";
+                Password = "";
+                ConfirmPassword = "";
+
+                // Redirect to home after a short delay
+                await Task.Delay(1500);
+                Nav.NavigateTo("/home", true);
+            }
+            else
+            {
+                // Show all errors
+                Message = string.Join(" ", result.Errors.Select(e => e.Description));
+                IsError = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Registration failed for user {Username}", Username);
+            Message = "An error occurred during registration.";
+            IsError = true;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await RegisterUser();
+        }
+    }
+}

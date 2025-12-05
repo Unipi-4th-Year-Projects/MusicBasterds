@@ -1,0 +1,54 @@
+﻿@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+
+<PageTitle>MusicBasterds</PageTitle>
+
+<div class="page">
+    @if (ShowNavMenu)
+    {
+        <div class="sidebar">
+            <NavMenu />
+        </div>
+    }
+
+    <main>
+        <div class="@(ShowNavMenu ? "content px-4" : "content-full")">
+            @Body
+        </div>
+    </main>
+</div>
+
+@code {
+    private bool ShowNavMenu = true;
+
+    protected override void OnInitialized()
+    {
+        UpdateNavMenuVisibility();
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        UpdateNavMenuVisibility();
+        StateHasChanged();
+    }
+
+    private void UpdateNavMenuVisibility()
+    {
+        var currentUri = NavigationManager.Uri;
+        var absolutePath = new Uri(currentUri).AbsolutePath;
+
+        // Hide nav menu on welcome/login/register pages
+        var hideNavPages = new[] { "/", "/welcome", "/login", "/register" };
+
+        ShowNavMenu = !hideNavPages.Any(page =>
+            absolutePath.Equals(page, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

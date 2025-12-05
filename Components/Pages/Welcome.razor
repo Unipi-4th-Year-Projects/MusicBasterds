@@ -1,0 +1,26 @@
+﻿@page "/welcome"
+@page "/"
+@inject NavigationManager Nav
+
+<div class="welcome-container">
+    <div class="logo-container">
+        <img src="favicon.png" alt="MusicBasterds Logo" class="neon-logo" />
+        <div class="logo-glow"></div>
+    </div>
+    <h1 class="neon-title">Welcome to MusicBasterds</h1>
+    <p class="neon-subtitle">// Share and discover the best music albums with fellow bastards</p>
+
+    <div class="button-group">
+        <button class="neon-btn neon-btn-primary" @onclick="GoToLogin">
+            [ Login ]
+        </button>
+        <button class="neon-btn neon-btn-outline" @onclick="GoToRegister">
+            [ Sign Up ]
+        </button>
+    </div>
+</div>
+
+@code {
+    private void GoToLogin() => Nav.NavigateTo("/login");
+    private void GoToRegister() => Nav.NavigateTo("/register");
+}

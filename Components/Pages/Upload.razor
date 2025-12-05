@@ -1,0 +1,354 @@
+﻿@page "/upload"
+@using Microsoft.AspNetCore.Authorization 
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using MusicBasterds.Models
+@using Microsoft.AspNetCore.Components.Forms
+@attribute [Authorize]
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject AlbumService AlbumService
+@inject NavigationManager Nav
+
+<div class="neon-upload-container">
+    <div class="upload-header">
+        <h1 class="neon-title">📀 Upload Album</h1>
+        <div class="title-underline"></div>
+        <p class="neon-subtitle">// Share your music discoveries with the community</p>
+    </div>
+
+    @if (SuccessMessage != null)
+    {
+        <div class="neon-alert neon-alert-success">
+            <span class="alert-icon">✓</span>
+            <span>@SuccessMessage</span>
+        </div>
+    }
+
+    @if (ErrorMessage != null)
+    {
+        <div class="neon-alert neon-alert-danger">
+            <span class="alert-icon">✗</span>
+            <span>@ErrorMessage</span>
+        </div>
+    }
+
+    <div class="upload-form-wrapper">
+        <EditForm Model="@AlbumModel" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+
+            <div class="form-grid">
+                <!-- Album Title -->
+                <div class="form-section full-width">
+                    <label class="neon-label">
+                        <span class="label-icon">🎵</span> Album Title *
+                    </label>
+                    <InputText class="neon-input"
+                               @bind-Value="@AlbumModel.Title"
+                               placeholder="Enter album title..." />
+                    <ValidationMessage For="@(() => AlbumModel.Title)" />
+                </div>
+
+                <!-- Artist -->
+                <div class="form-section full-width">
+                    <label class="neon-label">
+                        <span class="label-icon">🎤</span> Artist *
+                    </label>
+                    <InputText class="neon-input"
+                               @bind-Value="@AlbumModel.Artist"
+                               placeholder="Enter artist name..." />
+                    <ValidationMessage For="@(() => AlbumModel.Artist)" />
+                </div>
+
+                <!-- Genre -->
+                <div class="form-section">
+                    <label class="neon-label">
+                        <span class="label-icon">🎸</span> Genre *
+                    </label>
+                    <InputSelect class="neon-select" @bind-Value="AlbumModel.Genre">
+                        <option value="">Select Genre</option>
+                        @foreach (var genre in Genres)
+                        {
+                            <option value="@genre">@genre</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => AlbumModel.Genre)" />
+                </div>
+
+                <!-- Year -->
+                <div class="form-section">
+                    <label class="neon-label">
+                        <span class="label-icon">📅</span> Year
+                        <span class="optional-badge">optional</span>
+                    </label>
+                    <InputNumber class="neon-input"
+                                 @bind-Value="AlbumModel.Year"
+                                 placeholder="e.g. 1999" />
+                </div>
+
+                <!-- Album Image -->
+                <div class="form-section">
+                    <label class="neon-label">
+                        <span class="label-icon">🖼️</span> Album Cover
+                        <span class="optional-badge">optional</span>
+                    </label>
+                    <div class="image-upload-zone">
+                        <InputFile OnChange="HandleImageSelected" class="file-input" id="fileInput" />
+                        <label for="fileInput" class="file-label">
+                            @if (PreviewImage == null)
+                            {
+                                <div class="upload-placeholder">
+                                    <span class="upload-icon">📁</span>
+                                    <span>Click to upload</span>
+                                    <span class="upload-hint">Max 5MB</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <img src="@PreviewImage" class="preview-image" alt="Album preview" />
+                                <div class="change-image-overlay">
+                                    <span>Change Image</span>
+                                </div>
+                            }
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Album Links -->
+                <div class="form-section full-width">
+                    <label class="neon-label">
+                        <span class="label-icon">🔗</span> Album Links *
+                        <span class="link-count">(@AlbumModel.Links.Count)</span>
+                    </label>
+                    <div class="links-container">
+                        @for (int i = 0; i < AlbumModel.Links.Count; i++)
+                        {
+                            var index = i;
+                            <div class="link-input-group">
+                                <span class="link-number">@(index + 1)</span>
+                                <input type="url"
+                                       class="neon-input link-input"
+                                       value="@AlbumModel.Links[index].Url"
+                                       @oninput="@(e => UpdateLink(index, e.Value?.ToString() ?? ""))"
+                                       placeholder="https://spotify.com/..." />
+
+                                @if (AlbumModel.Links.Count > 1)
+                                {
+                                    <button type="button"
+                                            class="neon-btn-icon neon-btn-danger-icon"
+                                            @onclick="() => RemoveLink(index)">
+                                        ✗
+                                    </button>
+                                }
+                            </div>
+                        }
+                        <button type="button" class="neon-btn-sm add-link-btn" @onclick="AddLink">
+                            <span class="btn-icon">+</span> Add Another Link
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="form-section full-width">
+                    <label class="neon-label">
+                        <span class="label-icon">📝</span> Description *
+                        <span class="word-counter @(WordCount >= 50 ? "valid" : "invalid")">
+                            @WordCount / 50 words
+                        </span>
+                    </label>
+                    <InputTextArea class="neon-textarea"
+                                   @bind-Value="AlbumModel.Description"
+                                   rows="8"
+                                   placeholder="Share your thoughts about this album... (minimum 50 characters)" />
+                    <ValidationMessage For="@(() => AlbumModel.Description)" />
+                    <div class="description-help">
+                        💡 Tip: Include what makes this album special, standout tracks, or why others should listen.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Validation Summary -->
+            <div class="validation-panel">
+                <div class="validation-title">
+                    <span class="validation-icon">⚠️</span> Submission Requirements
+                </div>
+                <div class="validation-checklist">
+                    <div class="validation-item @(string.IsNullOrWhiteSpace(AlbumModel.Title) ? "" : "valid")">
+                        @(string.IsNullOrWhiteSpace(AlbumModel.Title) ? "☐" : "☑") Album title provided
+                    </div>
+                    <div class="validation-item @(string.IsNullOrWhiteSpace(AlbumModel.Artist) ? "" : "valid")">
+                        @(string.IsNullOrWhiteSpace(AlbumModel.Artist) ? "☐" : "☑") Artist name provided
+                    </div>
+                    <div class="validation-item @(string.IsNullOrWhiteSpace(AlbumModel.Genre) ? "" : "valid")">
+                        @(string.IsNullOrWhiteSpace(AlbumModel.Genre) ? "☐" : "☑") Genre selected
+                    </div>
+                    <div class="validation-item @(AlbumModel.Links.Count > 0 && !string.IsNullOrWhiteSpace(AlbumModel.Links[0].Url) ? "valid" : "")">
+                        @(AlbumModel.Links.Count > 0 && !string.IsNullOrWhiteSpace(AlbumModel.Links[0].Url) ? "☑" : "☐") At least one valid link
+                    </div>
+                    <div class="validation-item @(WordCount >= 50 ? "valid" : "")">
+                        @(WordCount >= 50 ? "☑" : "☐") Description has 50+ characters
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="submit-section">
+                <button type="submit"
+                        class="neon-btn-submit @(IsFormValid ? "" : "disabled")"
+                        disabled="@(!IsFormValid || isSubmitting)">
+                    @if (isSubmitting)
+                    {
+                        <span class="submit-icon">⏳</span>
+                        <span>Uploading...</span>
+                    }
+                    else
+                    {
+                        <span class="submit-icon">🚀</span>
+                        <span>@(IsFormValid ? "Submit Album" : "Complete Required Fields")</span>
+                    }
+                </button>
+                <button type="button" class="neon-btn-cancel" @onclick="Cancel">
+                    Cancel
+                </button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private Album AlbumModel = new Album
+    {
+        Links = new List<LinkItem> { new LinkItem() },
+        Genre = ""
+    };
+
+    private string? SuccessMessage;
+    private string? ErrorMessage;
+    private string? PreviewImage;
+    private string? CurrentUserId;
+    private string? CurrentUserName;
+    private bool isSubmitting = false;
+
+    private List<string> Genres = new List<string>
+    {
+        "Rock","Metal","Rap","Trap","Electronic","Jazz","Classical","R&B","Pop",
+        "Folk","Alternative","Blues","Punk","Latin","Funk",
+        "Ambient","Experimental","Indie","???"
+    };
+
+    private int WordCount => string.IsNullOrWhiteSpace(AlbumModel.Description)
+        ? 0
+        : AlbumModel.Description.Length;
+
+    private bool IsFormValid =>
+        !string.IsNullOrWhiteSpace(AlbumModel.Title) &&
+        !string.IsNullOrWhiteSpace(AlbumModel.Artist) &&
+        !string.IsNullOrWhiteSpace(AlbumModel.Genre) &&
+        AlbumModel.Links.Count > 0 &&
+        !string.IsNullOrWhiteSpace(AlbumModel.Links[0].Url) &&
+        WordCount >= 50;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Get current user info
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            CurrentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            CurrentUserName = user.Identity.Name;
+        }
+    }
+
+    private void AddLink() => AlbumModel.Links.Add(new LinkItem());
+
+    private void RemoveLink(int index)
+    {
+        if (index >= 0 && index < AlbumModel.Links.Count)
+            AlbumModel.Links.RemoveAt(index);
+    }
+
+    private async Task HandleSubmit()
+    {
+        ErrorMessage = null;
+        SuccessMessage = null;
+        isSubmitting = true;
+
+        try
+        {
+            if (!IsFormValid)
+            {
+                ErrorMessage = "Please fill in all required fields, at least one valid link, and a 50-character description.";
+                return;
+            }
+
+            if (CurrentUserId == null || CurrentUserName == null)
+            {
+                ErrorMessage = "You must be logged in to upload.";
+                return;
+            }
+
+            // Create and upload album
+            var createdAlbum = await AlbumService.CreateAlbumAsync(AlbumModel, CurrentUserId, CurrentUserName);
+
+            SuccessMessage = $"Album '{createdAlbum.Title}' uploaded successfully!";
+
+            // Reset form
+            AlbumModel = new Album
+            {
+                Links = new List<LinkItem> { new LinkItem() },
+                Genre = ""
+            };
+            PreviewImage = null;
+
+            // Optional: Redirect after delay
+            await Task.Delay(2000);
+            Nav.NavigateTo($"/album/{createdAlbum.Id}");
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error uploading album: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task HandleImageSelected(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            if (file != null && file.Size > 0)
+            {
+                using var stream = file.OpenReadStream(5_000_000); // 5MB limit
+                using var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+
+                AlbumModel.Image = memoryStream.ToArray();
+                AlbumModel.ImageContentType = file.ContentType;
+
+                PreviewImage = $"data:{file.ContentType};base64,{Convert.ToBase64String(AlbumModel.Image)}";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error uploading image: {ex.Message}";
+        }
+    }
+
+    private void UpdateLink(int index, string value)
+    {
+        if (index >= 0 && index < AlbumModel.Links.Count)
+        {
+            AlbumModel.Links[index].Url = value;
+        }
+    }
+
+    private void Cancel()
+    {
+        Nav.NavigateTo("/home");
+    }
+}

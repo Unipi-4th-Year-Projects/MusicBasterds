@@ -1,0 +1,340 @@
+﻿@page "/home"
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject AlbumService AlbumService
+@inject NavigationManager Nav
+
+<div class="neon-container">
+    <div class="header-section">
+        <h1 class="neon-title">MusicBasterds</h1>
+        <div class="glitch-line"></div>
+        <p class="neon-subtitle">// Welcome to the ultimate album discovery forum</p>
+    </div>
+
+    @if (CurrentUserId != null)
+    {
+        <div class="neon-alert">
+            <span class="alert-icon">→</span>
+            <span>Logged in as <strong>@CurrentUserName</strong> 🎧</span>
+        </div>
+
+        <div class="button-group">
+            <button class="neon-btn" @onclick="GoToUpload">
+                <span class="btn-bracket">[</span> Upload Album <span class="btn-bracket">]</span>
+            </button>
+            <button class="neon-btn" @onclick="GoToProfile">
+                <span class="btn-bracket">[</span> My Profile <span class="btn-bracket">]</span>
+            </button>
+            <button class="neon-btn neon-btn-secondary" @onclick="ToggleDiscoverMode">
+                <span class="btn-bracket">[</span> @(ShowDiscoverMode ? "Hide" : "Show") Discover <span class="btn-bracket">]</span>
+            </button>
+            <button class="neon-btn neon-btn-danger" @onclick="Logout">
+                <span class="btn-bracket">[</span> Logout <span class="btn-bracket">]</span>
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="neon-alert neon-alert-info">
+            <span class="alert-icon">→</span>
+            <span>You're not logged in. <a href="/login">Login</a> or <a href="/register">Sign up</a> to start sharing music!</span>
+        </div>
+    }
+
+    <!-- Quick Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📀</div>
+            <div class="stat-number">@TotalAlbums</div>
+            <div class="stat-label">Total Albums</div>
+            <div class="stat-glow"></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-number">@TotalUsers</div>
+            <div class="stat-label">Community Members</div>
+            <div class="stat-glow"></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🔥</div>
+            <div class="stat-number">@RecentAlbumsCount</div>
+            <div class="stat-label">This Week</div>
+            <div class="stat-glow"></div>
+        </div>
+    </div>
+
+    <hr class="neon-divider" />
+
+    <!-- Discover Section -->
+    @if (ShowDiscoverMode)
+    {
+        <div class="discover-section">
+            <h4 class="neon-section-title">
+                <span class="title-icon">🔍</span> Discover Music
+                <span class="title-underline"></span>
+            </h4>
+            <div class="discover-options">
+                <button class="neon-btn-sm @(SelectedGenre == null ? "active" : "")" @onclick="() => FilterByGenre(null)">
+                    All Genres
+                </button>
+                @foreach (var genre in AvailableGenres)
+                {
+                    <button class="neon-btn-sm @(SelectedGenre == genre ? "active" : "")" @onclick="() => FilterByGenre(genre)">
+                        @genre
+                    </button>
+                }
+            </div>
+            <div class="search-box">
+                <span class="search-icon">⚡</span>
+                <input @bind="SearchTerm" @oninput="OnSearch" class="neon-input" placeholder="Search albums or artists..." />
+            </div>
+        </div>
+    }
+
+    <!-- Top Rated Albums -->
+    @if (TopRatedAlbums.Any())
+    {
+        <div class="featured-section">
+            <h4 class="neon-section-title">
+                <span class="title-icon">⭐</span> Top Rated Albums
+                <span class="title-underline"></span>
+            </h4>
+            <div class="featured-grid">
+                @foreach (var album in TopRatedAlbums)
+                {
+                    <div class="featured-card">
+                        <AlbumCard Album="@album" />
+                        <div class="featured-badge">
+                            <span class="badge-star">★</span> TOP RATED
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Latest Albums -->
+    <div class="section-header">
+        <h4 class="neon-section-title">
+            <span class="title-icon">🔥</span> Latest Recommendations
+            <span class="title-underline"></span>
+        </h4>
+        <div class="sort-options">
+            <label class="sort-label">Sort:</label>
+            <select @bind="SortBy" class="neon-select">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="rating">Highest Rated</option>
+            </select>
+        </div>
+    </div>
+
+    @if (FilteredAlbums.Count == 0)
+    {
+        <div class="no-albums-container">
+            <p class="no-albums">// No albums found. Be the first to recommend one!</p>
+            <div class="empty-icon">📭</div>
+        </div>
+    }
+    else
+    {
+        <div class="albums-grid">
+            @foreach (var album in FilteredAlbums)
+            {
+                <AlbumCard Album="@album" />
+            }
+        </div>
+    }
+
+    <!-- Community Spotlight -->
+    @if (TopUsers.Any())
+    {
+        <hr class="neon-divider" />
+        <div class="community-section">
+            <h4 class="neon-section-title">
+                <span class="title-icon">🏆</span> Community Spotlight
+                <span class="title-underline"></span>
+            </h4>
+            <div class="users-grid">
+                @foreach (var user in TopUsers)
+                {
+                    <div class="user-card">
+                        <div class="user-avatar">@user.Username[0]</div>
+                        <div class="user-info">
+                            <div class="user-name">@user.Username</div>
+                            <div class="user-stats">📀 @user.AlbumCount albums</div>
+                            <div class="user-rating">⭐ Avg: @user.AverageRating.ToString("F1")</div>
+                        </div>
+                        <div class="user-badge">TOP</div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <h4 class="neon-section-title">
+            <span class="title-icon">⚡</span> Quick Actions
+            <span class="title-underline"></span>
+        </h4>
+        <div class="action-buttons">
+            <button class="neon-btn-sm" @onclick="ScrollToTop">
+                <span class="action-icon">↑</span> Back to Top
+            </button>
+            <button class="neon-btn-sm" @onclick="RefreshData">
+                <span class="action-icon">🔄</span> Refresh
+            </button>
+            @if (CurrentUserId != null)
+            {
+                <button class="neon-btn-sm" @onclick="GoToUpload">
+                    <span class="action-icon">➕</span> Add Album
+                </button>
+            }
+        </div>
+    </div>
+
+    <div class="footer-glow"></div>
+</div>
+
+@code {
+    // CHANGED: Using strings instead of User object
+    private string? CurrentUserId = null;
+    private string? CurrentUserName = null;
+
+    private List<Album> Albums = new();
+    private List<Album> FilteredAlbums = new();
+    private List<UserStats> TopUsers = new();
+    private bool ShowDiscoverMode = false;
+    private string? SelectedGenre = null;
+    private string SearchTerm = "";
+    private string _sortBy = "newest";
+    private int TotalAlbums = 0;
+    private int TotalUsers = 0;
+    private int RecentAlbumsCount = 0;
+
+    private string SortBy
+    {
+        get => _sortBy;
+        set
+        {
+            if (_sortBy != value)
+            {
+                _sortBy = value;
+                ApplyFilters();
+            }
+        }
+    }
+
+    private string[] AvailableGenres = new[] {
+        "Rock", "Electronic", "Hip-Hop", "Jazz", "Classical",
+        "Metal", "Pop", "Folk", "R&B", "Experimental"
+    };
+
+    private List<Album> TopRatedAlbums =>
+        Albums.Where(a => a.AverageRating >= 4.0 && a.Ratings.Count > 0)
+              .OrderByDescending(a => a.AverageRating)
+              .Take(3)
+              .ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        // CHANGED: Get current user from AuthenticationState
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            CurrentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            CurrentUserName = user.Identity.Name;
+        }
+
+        // Get albums
+        Albums = await AlbumService.GetAllAlbumsAsync();
+        TotalAlbums = Albums.Count;
+        RecentAlbumsCount = Albums.Count(a => a.UploadDate >= DateTime.Now.AddDays(-7));
+
+        // Get top users
+        TopUsers = await AlbumService.GetTopUsersAsync(6);
+
+        // Get total users count
+        TotalUsers = UserManager.Users.Count();
+
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        var filtered = Albums.AsEnumerable();
+
+        if (!string.IsNullOrEmpty(SelectedGenre))
+        {
+            filtered = filtered.Where(a =>
+                a.Genre?.Contains(SelectedGenre, StringComparison.OrdinalIgnoreCase) == true);
+        }
+
+        if (!string.IsNullOrEmpty(SearchTerm))
+        {
+            filtered = filtered.Where(a =>
+                a.Title.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                a.Artist.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                a.Genre?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) == true);
+        }
+
+        filtered = _sortBy switch
+        {
+            "newest" => filtered.OrderByDescending(a => a.UploadDate),
+            "oldest" => filtered.OrderBy(a => a.UploadDate),
+            "rating" => filtered.OrderByDescending(a => a.AverageRating),
+            _ => filtered.OrderByDescending(a => a.UploadDate)
+        };
+
+        FilteredAlbums = filtered.ToList();
+        StateHasChanged();
+    }
+
+    private void FilterByGenre(string? genre)
+    {
+        SelectedGenre = genre;
+        ApplyFilters();
+    }
+
+    private void OnSearch(ChangeEventArgs e)
+    {
+        SearchTerm = e.Value?.ToString() ?? "";
+        ApplyFilters();
+    }
+
+    private void ToggleDiscoverMode()
+    {
+        ShowDiscoverMode = !ShowDiscoverMode;
+    }
+
+    private void ScrollToTop()
+    {
+        Nav.NavigateTo("/home", true);
+    }
+
+    private async Task RefreshData()
+    {
+        await LoadData();
+    }
+
+    private void GoToUpload() => Nav.NavigateTo("/upload");
+    private void GoToProfile() => Nav.NavigateTo("/profile");
+
+    private async Task Logout()
+    {
+        // CHANGED: Use SignInManager for logout
+        await SignInManager.SignOutAsync();
+        Nav.NavigateTo("/welcome");
+    }
+}

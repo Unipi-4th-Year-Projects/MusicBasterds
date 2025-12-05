@@ -1,0 +1,543 @@
+﻿.neon-upload-container {
+    background: #1b1b1c;
+    min-height: 100vh;
+    padding: 2rem;
+    color: #d5fc76;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.upload-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.neon-title {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #d5fc76;
+    margin-bottom: 1rem;
+    letter-spacing: 1px;
+}
+
+.title-underline {
+    height: 1px;
+    width: 150px;
+    margin: 0 auto 1rem;
+    background: #3d3d3e;
+}
+
+.neon-subtitle {
+    font-size: 1.1rem;
+    color: #d5fc76;
+    opacity: 0.8;
+    letter-spacing: 0.5px;
+}
+
+.neon-alert {
+    background: rgba(213, 252, 118, 0.05);
+    border: 1px solid #d5fc76;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    margin: 1.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.neon-alert-success {
+    border-color: #d5fc76;
+    background: rgba(213, 252, 118, 0.1);
+}
+
+.neon-alert-danger {
+    border-color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.1);
+    color: #ff6b6b;
+}
+
+.alert-icon {
+    font-size: 1.5rem;
+}
+
+.upload-form-wrapper {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: #2d2d2e;
+    border: 1px solid #3d3d3e;
+    border-radius: 12px;
+    padding: 2.5rem;
+    transition: all 0.3s ease;
+}
+
+    .upload-form-wrapper:hover {
+        border-color: #d5fc76;
+        box-shadow: 0 4px 15px rgba(213, 252, 118, 0.1);
+    }
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+    .form-section.full-width {
+        grid-column: 1 / -1;
+    }
+
+.neon-label {
+    color: #d5fc76;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.label-icon {
+    font-size: 1.2rem;
+}
+
+.optional-badge {
+    font-size: 0.7rem;
+    background: rgba(213, 252, 118, 0.1);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #3d3d3e;
+    text-transform: lowercase;
+    margin-left: auto;
+}
+
+.neon-input {
+    background: #2d2d2e;
+    border: 1px solid #3d3d3e;
+    color: #e8e8e8;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+    .neon-input:focus {
+        outline: none;
+        border-color: #d5fc76;
+        box-shadow: 0 0 0 0.2rem rgba(213, 252, 118, 0.25);
+    }
+
+    .neon-input::placeholder {
+        color: #a0a0a0;
+        opacity: 0.7;
+    }
+
+.neon-select {
+    background: #2d2d2e;
+    border: 1px solid #3d3d3e;
+    color: #e8e8e8;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+    .neon-select:focus {
+        outline: none;
+        border-color: #d5fc76;
+    }
+
+    .neon-select option {
+        background: #2d2d2e;
+        color: #e8e8e8;
+    }
+
+.image-upload-zone {
+    position: relative;
+}
+
+.file-input {
+    display: none;
+}
+
+.file-label {
+    display: block;
+    width: 100%;
+    min-height: 200px;
+    background: rgba(213, 252, 118, 0.02);
+    border: 1px dashed #3d3d3e;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+    .file-label:hover {
+        background: rgba(213, 252, 118, 0.05);
+        border-color: #d5fc76;
+    }
+
+.upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    gap: 0.5rem;
+}
+
+.upload-icon {
+    font-size: 3rem;
+    opacity: 0.4;
+}
+
+.upload-hint {
+    font-size: 0.8rem;
+    opacity: 0.6;
+}
+
+.preview-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.change-image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(213, 252, 118, 0.9);
+    color: #1b1b1c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.file-label:hover .change-image-overlay {
+    opacity: 1;
+}
+
+.links-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.link-count {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-left: auto;
+}
+
+.link-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.link-number {
+    background: rgba(213, 252, 118, 0.1);
+    color: #d5fc76;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    border: 1px solid #3d3d3e;
+    flex-shrink: 0;
+}
+
+.link-input {
+    flex: 1;
+}
+
+.neon-btn-icon {
+    background: transparent;
+    border: 1px solid #3d3d3e;
+    color: #d5fc76;
+    width: 35px;
+    height: 35px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+    .neon-btn-icon:hover {
+        background: rgba(213, 252, 118, 0.1);
+        border-color: #d5fc76;
+    }
+
+.neon-btn-danger-icon {
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+}
+
+    .neon-btn-danger-icon:hover {
+        background: rgba(255, 107, 107, 0.1);
+        border-color: #ff6b6b;
+    }
+
+.neon-btn-sm {
+    background: transparent;
+    color: #d5fc76;
+    border: 1px solid #3d3d3e;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+    .neon-btn-sm:hover {
+        background: rgba(213, 252, 118, 0.1);
+        border-color: #d5fc76;
+    }
+
+.btn-icon {
+    font-size: 1.2rem;
+}
+
+.add-link-btn {
+    align-self: flex-start;
+}
+
+.neon-textarea {
+    background: #2d2d2e;
+    border: 1px solid #3d3d3e;
+    color: #e8e8e8;
+    padding: 1rem;
+    border-radius: 6px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 1rem;
+    resize: vertical;
+    transition: all 0.3s ease;
+    line-height: 1.6;
+}
+
+    .neon-textarea:focus {
+        outline: none;
+        border-color: #d5fc76;
+        box-shadow: 0 0 0 0.2rem rgba(213, 252, 118, 0.25);
+    }
+
+    .neon-textarea::placeholder {
+        color: #a0a0a0;
+        opacity: 0.7;
+    }
+
+.word-counter {
+    margin-left: auto;
+    font-size: 0.9rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    border: 1px solid #3d3d3e;
+    background: rgba(213, 252, 118, 0.05);
+}
+
+    .word-counter.valid {
+        color: #d5fc76;
+        border-color: #d5fc76;
+        background: rgba(213, 252, 118, 0.1);
+    }
+
+    .word-counter.invalid {
+        color: #ff6b6b;
+        border-color: #ff6b6b;
+        background: rgba(255, 107, 107, 0.1);
+    }
+
+.description-help {
+    font-size: 0.85rem;
+    opacity: 0.7;
+    font-style: italic;
+    margin-top: 0.5rem;
+}
+
+.validation-panel {
+    background: rgba(213, 252, 118, 0.05);
+    border: 1px solid #3d3d3e;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+}
+
+    .validation-panel:hover {
+        border-color: #d5fc76;
+    }
+
+.validation-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #d5fc76;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.validation-icon {
+    font-size: 1.3rem;
+}
+
+.validation-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.validation-item {
+    color: #ff6b6b;
+    padding: 0.5rem;
+    border-left: 3px solid #ff6b6b;
+    background: rgba(255, 107, 107, 0.05);
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+    .validation-item.valid {
+        color: #d5fc76;
+        border-left-color: #d5fc76;
+        background: rgba(213, 252, 118, 0.05);
+    }
+
+.submit-section {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.neon-btn-submit {
+    background: transparent;
+    color: #d5fc76;
+    border: 2px solid #d5fc76;
+    padding: 1rem 2.5rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+    .neon-btn-submit:hover:not(.disabled) {
+        background: rgba(213, 252, 118, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .neon-btn-submit.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        border-color: #666;
+        color: #666;
+    }
+
+.submit-icon {
+    font-size: 1.3rem;
+}
+
+.neon-btn-cancel {
+    background: transparent;
+    color: #ff6b6b;
+    border: 1px solid #ff6b6b;
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+    .neon-btn-cancel:hover {
+        background: rgba(255, 107, 107, 0.1);
+    }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .neon-upload-container {
+        padding: 1rem;
+    }
+
+    .neon-title {
+        font-size: 2rem;
+    }
+
+    .upload-form-wrapper {
+        padding: 1.5rem;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .form-section {
+        grid-column: 1 / -1 !important;
+    }
+
+    .submit-section {
+        flex-direction: column;
+    }
+
+    .neon-btn-submit,
+    .neon-btn-cancel {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Animation for form load */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.upload-form-wrapper {
+    animation: fadeInUp 0.6s ease-out;
+}

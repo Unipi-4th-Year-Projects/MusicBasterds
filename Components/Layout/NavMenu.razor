@@ -1,0 +1,116 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Nav
+@inject SignInManager<ApplicationUser> SignInManager
+
+<div class="top-row ps-3 navbar navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/home">
+            <span class="music-icon">🎵</span> MusicBasterds
+        </a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable bg-dark text-light">
+    <nav class="flex-column">
+        <!-- User Info Section -->
+        @if (IsAuthenticated)
+        {
+            <div class="user-info-section px-3 py-3 border-bottom">
+                <div class="user-avatar-small mb-2">@(CurrentUserName?[0] ?? '?')</div>
+                <div class="user-name">@CurrentUserName</div>
+                <div class="user-email text-muted small">@CurrentUserEmail</div>
+            </div>
+        }
+
+        <!-- Main Navigation -->
+        <div class="nav-items-container mt-2">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link text-light" href="/home" Match="NavLinkMatch.Prefix">
+                    <span class="nav-icon">🏠</span> Home
+                </NavLink>
+            </div>
+
+            @if (IsAuthenticated)
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link text-light" href="/profile">
+                        <span class="nav-icon">👤</span> Profile
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link text-light" href="/upload">
+                        <span class="nav-icon">📤</span> Upload
+                    </NavLink>
+                </div>
+            }
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link text-light" href="/stats">
+                    <span class="nav-icon">📊</span> Statistics
+                </NavLink>
+            </div>
+        </div>
+
+        <!-- Authentication Section -->
+        <div class="auth-section px-3 mt-3 border-top pt-2">
+            @if (IsAuthenticated)
+            {
+                <button class="nav-link text-secondary w-100 text-start p-0 bg-transparent border-0" @onclick="Logout">
+                    <span class="nav-icon">🚪</span> Logout
+                </button>
+            }
+            else
+            {
+                <div class="nav-item">
+                    <NavLink class="nav-link text-light" href="/login">
+                        <span class="nav-icon">🔑</span> Login
+                    </NavLink>
+                </div>
+                <div class="nav-item">
+                    <NavLink class="nav-link text-light" href="/register">
+                        <span class="nav-icon">📝</span> Register
+                    </NavLink>
+                </div>
+            }
+        </div>
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private bool IsAuthenticated = false;
+    private string? CurrentUserName;
+    private string? CurrentUserEmail;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Get authentication state
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        IsAuthenticated = user.Identity?.IsAuthenticated == true;
+
+        if (IsAuthenticated)
+        {
+            CurrentUserName = user.Identity.Name;
+            CurrentUserEmail = user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+        }
+    }
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    private async Task Logout()
+    {
+        await SignInManager.SignOutAsync();
+        Nav.NavigateTo("/welcome", true);
+    }
+}

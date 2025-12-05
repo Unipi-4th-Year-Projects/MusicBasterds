@@ -1,0 +1,111 @@
+﻿@page "/login"
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager Nav
+@inject ILogger<Login> Logger
+
+<div class="login-container">
+    <div class="login-box">
+        <div class="login-header">
+            <h3 class="neon-title">[ Login ]</h3>
+            <p class="neon-subtitle">// Access your MusicBasterds account</p>
+        </div>
+
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="neon-alert neon-alert-error">
+                ⚠️ @ErrorMessage
+            </div>
+        }
+
+        <div class="form-group">
+            <label class="neon-label">→ Username</label>
+            <input @bind="Username" class="neon-input" placeholder="Enter your username" />
+        </div>
+
+        <div class="form-group">
+            <label class="neon-label">→ Password</label>
+            <input type="password" @bind="Password" class="neon-input" placeholder="Enter your password"
+                   @onkeypress="HandleKeyPress" />
+        </div>
+
+        <div class="form-group">
+            <label class="neon-checkbox">
+                <input type="checkbox" @bind="RememberMe" />
+                <span>Remember me</span>
+            </label>
+        </div>
+
+        <button class="neon-btn neon-btn-primary" @onclick="LoginUser" disabled="@isLoading">
+            @(isLoading ? "[ Authenticating... ]" : "[ Authenticate ]")
+        </button>
+
+        <div class="login-footer">
+            <span class="neon-text">No account? </span>
+            <a href="/register" class="neon-link">Create one here</a>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string Username = "";
+    private string Password = "";
+    private bool RememberMe = true;
+    private string? ErrorMessage;
+    private bool isLoading = false;
+
+    private async Task LoginUser()
+    {
+        if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
+        {
+            ErrorMessage = "Please enter both username and password.";
+            return;
+        }
+
+        isLoading = true;
+        ErrorMessage = null;
+
+        try
+        {
+            // This is the new Identity login
+            var result = await SignInManager.PasswordSignInAsync(
+                Username, Password, RememberMe, lockoutOnFailure: false);
+
+            if (result.Succeeded)
+            {
+                Logger.LogInformation("User {Username} logged in.", Username);
+                Nav.NavigateTo("/home", true);
+            }
+            else if (result.IsLockedOut)
+            {
+                ErrorMessage = "Account locked out. Try again later.";
+            }
+            else if (result.RequiresTwoFactor)
+            {
+                // Redirect to two-factor auth page if you implement it
+                ErrorMessage = "Two-factor authentication required.";
+            }
+            else
+            {
+                ErrorMessage = "Invalid username or password.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Login failed for user {Username}", Username);
+            ErrorMessage = "An error occurred during login.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await LoginUser();
+        }
+    }
+}

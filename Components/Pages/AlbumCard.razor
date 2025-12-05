@@ -1,0 +1,56 @@
+﻿@using MusicBasterds.Models
+@inherits ComponentBase
+
+<div class="neon-card" @onclick="GoToAlbumDetail">
+    @if (Album.Image != null)
+    {
+        <div class="neon-card-image">
+            <img src="@($"data:image/png;base64,{Convert.ToBase64String(Album.Image)}")" />
+        </div>
+    }
+
+    <div class="neon-card-content">
+        <h3 class="neon-card-title">@Album.Title</h3>
+        <div class="neon-card-info">
+            <span class="neon-info-item">🎤 @Album.Artist</span>
+            <span class="neon-info-item">🎵 @Album.Genre</span>
+        </div>
+
+        <p class="neon-card-description">@GetShortDescription()</p>
+
+        <div class="neon-card-footer">
+            <span class="neon-uploader">→ By @Album.UserName</span>
+            <div class="neon-stats">
+                @if (Album.AverageRating >= 0)
+                {
+                    <span class="neon-badge neon-badge-primary">⭐ @Album.DisplayRating</span>
+                }
+                else
+                {
+                    <span class="neon-badge neon-badge-secondary">⭐ No ratings</span>
+                }
+                <span class="neon-badge neon-badge-secondary">💬 @Album.Comments.Count</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Album Album { get; set; } = new Album();
+
+    [Inject]
+    private NavigationManager Nav { get; set; } = default!;
+
+    private string GetShortDescription()
+    {
+        if (string.IsNullOrWhiteSpace(Album.Description)) return "";
+        var words = Album.Description.Split(' ');
+        return words.Length > 30 ? string.Join(" ", words.Take(30)) + "..." : Album.Description;
+    }
+
+    private void GoToAlbumDetail()
+    {
+        Nav.NavigateTo($"/album/{Album.Id}");
+    }
+}
